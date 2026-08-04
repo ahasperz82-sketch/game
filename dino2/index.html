@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>공룡 기억력 카드</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:linear-gradient(#d6f5d6,#fdfff0);display:flex;justify-content:center;
+  -webkit-user-select:none;user-select:none}
+#app{width:100%;max-width:480px;min-width:320px;display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px}
+#walletBox{background:#fff;border-radius:999px;padding:8px 16px;font-size:20px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.hspace{flex:1}
+.hbtn{border:none;background:#fff;border-radius:14px;padding:10px 14px;font-size:17px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12);cursor:pointer;font-family:inherit}
+#btnGear{font-size:15px;padding:8px 10px;opacity:.75}
+main{flex:1;display:flex;flex-direction:column}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+.big{min-height:64px;font-size:24px;font-weight:800;border:none;border-radius:18px;
+  color:#fff;background:linear-gradient(135deg,#2fb46b,#1d8a4e);
+  box-shadow:0 4px 0 #14663a;width:100%;margin-top:14px}
+.big.alt{background:linear-gradient(135deg,#57c3ff,#3a86ff);box-shadow:0 4px 0 #2a5fc0;
+  font-size:19px;min-height:64px}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+/* 시작 화면 */
+#scrStart{padding:20px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrStart h1{font-size:30px;color:#1d6b3f;margin-bottom:6px}
+#scrStart .sub{font-size:16px;color:#4a7a5c;margin-bottom:10px}
+#startDino{font-size:64px;animation:bob 2s infinite ease-in-out}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+/* 게임 화면 */
+#foundBar{margin:4px 12px;background:#fff8dd;border:2px solid #ffd166;border-radius:14px;
+  padding:10px;text-align:center;font-size:18px;font-weight:700;color:#7a5a00;min-height:48px}
+#goalBar{margin:0 12px;text-align:center;font-size:14px;color:#4a7a5c;padding:4px}
+#grid{display:grid;gap:10px;padding:12px;grid-template-columns:repeat(4,1fr)}
+.card{aspect-ratio:3/4;perspective:700px;cursor:pointer}
+.cin{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.card.open .cin,.card.done .cin{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.fb{background:linear-gradient(135deg,#57c3ff,#3a86ff);color:#fff;font-size:32px;
+  box-shadow:0 3px 6px rgba(0,0,0,.15)}
+.ff{background:#fff;transform:rotateY(180deg);border:3px solid #ffd166}
+.ff .em{font-size:36px}
+.ff .nm{font-size:14px;font-weight:800;color:#333;margin-top:2px}
+#grid.small .ff .em{font-size:26px}
+#grid.small .ff .nm{font-size:11px}
+.card.done .ff{border-color:#06d6a0;background:#eafff5}
+.card.done{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+/* 판 완성 시트 */
+#clearBox{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;z-index:40}
+#clearInner{background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.2);
+  padding:20px;width:100%;max-width:480px;text-align:center}
+#clearStars{font-size:44px}
+#clearMsg{font-size:22px;font-weight:800;color:#1d6b3f;margin:6px 0}
+/* 도감 */
+#scrDex{padding:12px}
+#scrDex h2{text-align:center;color:#1d6b3f;font-size:24px;margin:8px 0}
+#dexGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dexCell{background:#fff;border-radius:14px;padding:10px 4px;text-align:center;
+  border:3px solid #cde8d5;min-height:96px}
+.dexCell .de{font-size:34px}
+.dexCell .dn{font-size:13px;font-weight:700;color:#333}
+.dexCell.miss{background:#eef2ee;color:#9ab09f}
+.dexCell.miss .de{filter:grayscale(1);opacity:.5}
+.dexCell .no{font-size:11px;color:#8aa08f}
+/* 끝 화면 */
+#scrEnd{padding:30px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrEnd h2{font-size:28px;color:#1d6b3f;margin:10px 0}
+#endStats{font-size:19px;color:#4a7a5c;margin:8px 0;line-height:1.7}
+/* 모달 */
+#ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;
+  justify-content:center;z-index:50;padding:16px}
+.mbox{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px;
+  max-height:85vh;overflow:auto}
+.mbox h3{font-size:20px;margin-bottom:12px;color:#1d6b3f}
+.mbox label{display:block;font-size:15px;font-weight:700;margin:12px 0 4px;color:#444}
+.mbox input,.mbox select{width:100%;font-size:20px;padding:12px;border:2px solid #bbb;
+  border-radius:12px;font-family:inherit}
+.codeShow{font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;
+  background:#f0f7ff;border:2px dashed #3a86ff;border-radius:12px;padding:16px 6px;margin:8px 0;
+  -webkit-user-select:text;user-select:text}
+.mrow{display:flex;gap:10px;margin-top:16px}
+.mrow button{flex:1;min-height:56px;font-size:18px;font-weight:700;border:none;border-radius:14px}
+.mok{background:#2fb46b;color:#fff}
+.mcancel{background:#e5e5e5;color:#333}
+.gateMsg{color:#d33;font-size:14px;min-height:20px;margin-top:6px}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+/* 별 날아가기 */
+.flystar{position:fixed;font-size:30px;z-index:99;transition:transform .8s ease-in,opacity .8s;
+  pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div id="walletBox">⭐ <span id="walletStars">0</span></div>
+  <div class="hspace"></div>
+  <button id="btnDex" class="hbtn">📖 도감</button>
+  <button id="btnGear" class="hbtn">⚙️</button>
+</header>
+<main>
+  <section id="scrStart">
+    <div id="startDino">🦖</div>
+    <h1>공룡 기억력 카드</h1>
+    <div class="sub">같은 공룡 짝을 찾아 도감을 채워요!</div>
+    <button id="btnStart" class="big">▶ 시작</button>
+    <button id="btnShowCode" class="big alt">🔑 이어하기 코드 보기</button>
+    <button id="btnEnterCode" class="big alt">⌨️ 코드 입력</button>
+  </section>
+
+  <section id="scrGame" class="hidden">
+    <div id="foundBar">같은 공룡 짝을 찾아요!</div>
+    <div id="goalBar"></div>
+    <div id="grid"></div>
+  </section>
+
+  <section id="scrDex" class="hidden">
+    <h2>📖 공룡 도감</h2>
+    <div id="dexGrid"></div>
+    <button id="btnDexBack" class="big alt">돌아가기</button>
+  </section>
+
+  <section id="scrEnd" class="hidden">
+    <div style="font-size:60px">🌙</div>
+    <h2>오늘은 여기까지!<br>내일 또 만나!</h2>
+    <div id="endStats"></div>
+    <button id="btnEndDex" class="big alt">📖 도감 구경하기</button>
+    <button id="btnEndCode" class="big alt">🔑 이어하기 코드 보기</button>
+  </section>
+</main>
+</div>
+
+<div id="clearBox" class="hidden">
+  <div id="clearInner">
+    <div id="clearStars">⭐⭐</div>
+    <div id="clearMsg">판 완성!</div>
+    <button id="btnNext" class="big">다음 판 하기</button>
+  </div>
+</div>
+
+<div id="ovl" class="hidden">
+  <div class="mbox hidden" id="mCode">
+    <h3>🔑 이어하기 코드</h3>
+    <div>다른 기기에서 이 코드를 입력하면<br>별과 도감을 옮길 수 있어요.</div>
+    <div class="codeShow" id="codeText"></div>
+    <div class="mrow"><button class="mcancel" id="btnCodeClose">닫기</button></div>
+  </div>
+  <div class="mbox hidden" id="mInput">
+    <h3>⌨️ 코드 입력</h3>
+    <label for="codeIn">이어하기 코드를 넣어 주세요</label>
+    <input id="codeIn" placeholder="예: AB2C-DE3F-GH4J-KL5" autocomplete="off">
+    <div class="gateMsg" id="codeMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnCodeCancel">취소</button>
+      <button class="mok" id="btnCodeOk">복원하기</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mGate">
+    <h3>👨‍👩‍👧 부모님 확인</h3>
+    <label for="gateIn">7 + 8 = ?</label>
+    <input id="gateIn" type="number" inputmode="numeric" autocomplete="off">
+    <div class="gateMsg" id="gateMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnGateCancel">취소</button>
+      <button class="mok" id="btnGateOk">확인</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mSet">
+    <h3>⚙️ 부모 설정</h3>
+    <label for="setCards">카드 수</label>
+    <select id="setCards">
+      <option value="6">6장 (3쌍) — 쉬움</option>
+      <option value="8">8장 (4쌍) — 기본</option>
+      <option value="12">12장 (6쌍)</option>
+      <option value="16">16장 (8쌍) — 어려움</option>
+    </select>
+    <label for="setGoal">오늘 목표 (별 개수)</label>
+    <input id="setGoal" type="number" inputmode="numeric" min="1" max="31">
+    <div class="mrow">
+      <button class="mcancel" id="btnSetCancel">취소</button>
+      <button class="mok" id="btnSetOk">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   공통 저장 라이브러리 v1 — 부록 A 공통 저장 규격 v2 구현
+   모든 게임에 이 블록을 그대로 <sc ript> 안에 붙여 넣는다.
+   게임별로 바꾸는 것은 GAME_ID 한 줄뿐이다.
+   ============================================================ */
+var GAME_ID = "dino2"; // 게임마다 이 줄만 변경
+
+/* 세이브 코드 문자셋: 영문 대문자+숫자 32자, O·0·I·1 제외 */
+var CS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* ---------- localStorage 안전 입출력 ---------- */
+function lsGet(k, def) {
+  try {
+    var v = JSON.parse(localStorage.getItem(k));
+    return (v && typeof v === "object") ? v : JSON.parse(JSON.stringify(def));
+  } catch (e) { return JSON.parse(JSON.stringify(def)); }
+}
+function lsSet(k, obj) {
+  try { localStorage.setItem(k, JSON.stringify(obj)); } catch (e) { /* 저장 실패해도 게임은 계속 */ }
+}
+
+/* ---------- 공용 4키 (있는 키는 절대 지우지 않고 읽어서 이어 씀) ---------- */
+function getWallet()  { return lsGet("game_wallet",     {v:1, stars:0, total:0}); }
+function getCloset()  { return lsGet("game_closet",     {v:1, owned:[], wearing:{}}); }
+function getColl()    { return lsGet("game_collection", {v:1, badges:[], cards:[]}); }
+function getSave(def) { return lsGet("game_save_" + GAME_ID, def || {}); }
+function putWallet(w) { lsSet("game_wallet", w); }
+function putCloset(c) { lsSet("game_closet", c); }
+function putColl(c)   { lsSet("game_collection", c); }
+function putSave(s)   { lsSet("game_save_" + GAME_ID, s); }
+
+/* 별 획득: stars와 total을 함께 올린다. total은 절대 줄지 않는다 */
+function addStars(n) {
+  var w = getWallet(); w.stars += n; w.total += n; putWallet(w);
+}
+/* 별 사용(상점): stars만 줄인다. 부족하면 false */
+function spendStars(n) {
+  var w = getWallet(); if (w.stars < n) return false;
+  w.stars -= n; putWallet(w); return true;
+}
+/* 뱃지·카드 획득(중복 방지) */
+function addBadge(n) { var c = getColl(); if (c.badges.indexOf(n) < 0) { c.badges.push(n); putColl(c); } }
+function addCard(n)  { var c = getColl(); if (c.cards.indexOf(n)  < 0) { c.cards.push(n);  putColl(c); } }
+
+/* ---------- 세이브 코드 (15자: 데이터 14 + 검사 1, 4자마다 하이픈) ----------
+   구성: stars(2) total(2) closet소유비트(3) badges비트(3) cards비트(2) 진행p1(1) 진행p2(1)
+   숫자 2자 = 0~1023, 비트 3자 = 항목 1~15번, 비트 2자 = 항목 1~10번, 1자 = 0~31 */
+function enc2(n) { n = Math.max(0, Math.min(1023, Math.round(n||0))); return CS[Math.floor(n/32)] + CS[n%32]; }
+function dec2(s) { return CS.indexOf(s[0])*32 + CS.indexOf(s[1]); }
+function encBits(arr, chars) { /* 번호 배열 -> chars글자 비트마스크 */
+  var bits = 0;
+  (arr||[]).forEach(function(x){ x = parseInt(x,10); if (x >= 1 && x <= chars*5) bits |= (1 << (x-1)); });
+  var out = "";
+  for (var i = chars-1; i >= 0; i--) out += CS[(bits >> (i*5)) & 31];
+  return out;
+}
+function decBits(s) { /* 글자들 -> 번호 배열 */
+  var bits = 0, i;
+  for (i = 0; i < s.length; i++) bits = (bits << 5) | CS.indexOf(s[i]);
+  var arr = [];
+  for (i = 1; i <= s.length*5; i++) if (bits & (1 << (i-1))) arr.push(i);
+  return arr;
+}
+function makeCode(p1, p2) {
+  var w = getWallet(), c = getCloset(), k = getColl();
+  var raw = enc2(w.stars) + enc2(w.total) + encBits(c.owned,3) + encBits(k.badges,3) + encBits(k.cards,2) + CS[Math.max(0,Math.min(31,p1||0))] + CS[Math.max(0,Math.min(31,p2||0))];
+  var sum = 0; for (var i = 0; i < raw.length; i++) sum += CS.indexOf(raw[i]);
+  raw += CS[sum % 32];
+  return raw.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+function parseCode(str) {
+  var raw = (str||"").toUpperCase().replace(/[^A-Z2-9]/g, "");
+  if (raw.length !== 15) return null;
+  var sum = 0, i, x;
+  for (i = 0; i < 14; i++) { x = CS.indexOf(raw[i]); if (x < 0) return null; sum += x; }
+  if (CS[sum % 32] !== raw[14]) return null; /* 검사 글자 불일치 = 오타 */
+  return {
+    stars:  dec2(raw.slice(0,2)),
+    total:  dec2(raw.slice(2,4)),
+    owned:  decBits(raw.slice(4,7)),
+    badges: decBits(raw.slice(7,10)),
+    cards:  decBits(raw.slice(10,12)),
+    p1: CS.indexOf(raw[12]),
+    p2: CS.indexOf(raw[13])
+  };
+}
+/* 복원 적용: 재산이 지금보다 적으면 confirmFn(안내문)이 true일 때만 덮어씀.
+   total은 어떤 경우에도 큰 값을 유지한다. 반환: "ok" | "cancel" | "bad" */
+function applyCode(str, confirmFn) {
+  var d = parseCode(str);
+  if (!d) return "bad";
+  var w = getWallet();
+  if (d.total < w.total || d.stars < w.stars) {
+    var msg = "입력한 코드의 재산(별 " + d.stars + "개)이 지금 기기(별 " + w.stars + "개)보다 적어요. 그래도 코드 쪽으로 되돌릴까요?";
+    if (!confirmFn(msg)) return "cancel";
+  }
+  putWallet({v:1, stars:d.stars, total:Math.max(d.total, w.total)});
+  var c = getCloset(); c.owned = d.owned; putCloset(c);
+  putColl({v:1, badges:d.badges, cards:d.cards});
+  return "ok";
+}
+
+/* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+function speak(txt) {
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(txt);
+    u.lang = "ko-KR"; u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/* ---------- 효과음(WebAudio, 외부 파일 없음) ---------- */
+var _ac = null;
+function _ctx() { if (!_ac) { try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return _ac; }
+function beep(freq, dur, type) {
+  var ac = _ctx(); if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (dur||0.15));
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + (dur||0.15));
+}
+function sfxGood()  { beep(660,0.12); setTimeout(function(){beep(880,0.12);},110); setTimeout(function(){beep(1320,0.2);},220); }
+function sfxHint()  { beep(440,0.15,"triangle"); }
+function sfxDone()  { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.18);}, i*140); }); }
+/* ============================================================ */
+
+/* ==================== 게임 본체: 공룡 기억력 카드 ====================
+   저장 키: game_wallet · game_closet · game_collection · game_save_dino2 */
+var DINOS = [
+  {n:1,  e:"🦖", name:"티라노"},
+  {n:2,  e:"🦕", name:"브라키오"},
+  {n:3,  e:"🦏", name:"트리케라"},
+  {n:4,  e:"🦔", name:"스테고"},
+  {n:5,  e:"🦅", name:"프테라"},
+  {n:6,  e:"🐊", name:"스피노"},
+  {n:7,  e:"🦎", name:"랩터"},
+  {n:8,  e:"🐢", name:"안킬로"},
+  {n:9,  e:"🐋", name:"모사"},
+  {n:10, e:"🐏", name:"파키"},
+  {n:11, e:"🐲", name:"알로"},
+  {n:12, e:"🐍", name:"디플로"}
+];
+
+var SV = getSave({v:1, day:"", todayStars:0, rounds:0, cfg:{cards:8, goal:5}});
+if (!SV.cfg) SV.cfg = {cards:8, goal:5};
+if (!SV.cfg.cards) SV.cfg.cards = 8;
+if (!SV.cfg.goal) SV.cfg.goal = 5;
+
+function $(id){ return document.getElementById(id); }
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function ensureDay(){ if (SV.day !== todayStr()) { SV.day = todayStr(); SV.todayStars = 0; putSave(SV); } }
+
+var SCREENS = ["scrStart","scrGame","scrDex","scrEnd"];
+function showScreen(id){ SCREENS.forEach(function(s){ if(s===id) show($(s)); else hide($(s)); }); }
+var MODALS = ["mCode","mInput","mGate","mSet"];
+function openModal(id){ show($("ovl")); MODALS.forEach(function(m){ if(m===id) show($(m)); else hide($(m)); }); }
+function closeModal(){ hide($("ovl")); }
+
+function refreshWallet(){ $("walletStars").textContent = getWallet().stars; }
+function flyStar(fromEl, delay){
+  var src = fromEl || $("grid");
+  var r1 = src.getBoundingClientRect(), r2 = $("walletBox").getBoundingClientRect();
+  var s = document.createElement("div");
+  s.className = "flystar"; s.textContent = "⭐";
+  var x0 = r1.left + r1.width/2 - 15, y0 = r1.top + r1.height/2 - 15;
+  s.style.left = x0 + "px"; s.style.top = y0 + "px";
+  document.body.appendChild(s);
+  setTimeout(function(){
+    s.style.transform = "translate(" + (r2.left + r2.width/2 - 15 - x0) + "px," +
+      (r2.top + r2.height/2 - 15 - y0) + "px) scale(.4)";
+    s.style.opacity = "0.3";
+  }, 40 + (delay||0));
+  setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); refreshWallet(); }, 900 + (delay||0));
+}
+function awardStars(n, el){
+  if (n <= 0) return;
+  addStars(n);
+  for (var i=0;i<n;i++) flyStar(el, i*220);
+}
+
+/* ---------- 판 진행 ---------- */
+var sel = [], lockBoard = true, matchedPairs = 0, pairCount = 4, hadNew = false;
+
+function goalText(){ return "오늘 별 " + SV.todayStars + " / 목표 " + SV.cfg.goal + "개"; }
+
+function startRound(){
+  ensureDay();
+  showScreen("scrGame");
+  var count = SV.cfg.cards; pairCount = count/2;
+  var coll = getColl().cards;
+  var fresh = shuffle(DINOS.filter(function(d){ return coll.indexOf(d.n) < 0; }));
+  var older = shuffle(DINOS.filter(function(d){ return coll.indexOf(d.n) >= 0; }));
+  var pick = fresh.slice(0, pairCount);
+  if (pick.length < pairCount) pick = pick.concat(older.slice(0, pairCount - pick.length));
+  hadNew = pick.some(function(d){ return coll.indexOf(d.n) < 0; });
+  var deck = [];
+  pick.forEach(function(d){ deck.push(d); deck.push(d); });
+  shuffle(deck);
+  var g = $("grid");
+  g.innerHTML = "";
+  g.style.gridTemplateColumns = "repeat(" + (count === 6 ? 3 : 4) + ",1fr)";
+  if (count >= 12) g.classList.add("small"); else g.classList.remove("small");
+  matchedPairs = 0; sel = []; lockBoard = true;
+  deck.forEach(function(d){
+    var c = document.createElement("div");
+    c.className = "card open";
+    c.innerHTML = '<div class="cin"><div class="face fb">🥚</div>' +
+      '<div class="face ff"><span class="em">' + d.e + '</span><span class="nm">' + d.name + '</span></div></div>';
+    c.addEventListener("click", function(){ tapCard(c, d); });
+    g.appendChild(c);
+  });
+  $("foundBar").textContent = "잘 봐 두세요! 곧 카드가 덮여요!";
+  $("goalBar").textContent = goalText();
+  speak("같은 공룡 짝을 찾아 보세요");
+  setTimeout(function(){
+    Array.prototype.forEach.call(g.children, function(c){ c.classList.remove("open"); });
+    $("foundBar").textContent = "같은 공룡 짝을 찾아요!";
+    lockBoard = false;
+  }, 2000);
+}
+
+function tapCard(c, d){
+  if (lockBoard) return;
+  if (c.classList.contains("open") || c.classList.contains("done")) return;
+  c.classList.add("open");
+  sel.push({c:c, d:d});
+  if (sel.length < 2) return;
+  lockBoard = true;
+  var a = sel[0], b = sel[1];
+  if (a.d.n === b.d.n) {
+    setTimeout(function(){
+      a.c.classList.add("done"); b.c.classList.add("done");
+      matchedPairs++;
+      sfxGood();
+      var isNew = getColl().cards.indexOf(a.d.n) < 0;
+      addCard(a.d.n);
+      $("foundBar").textContent = "방금 찾은 짝: " + a.d.e + " " + a.d.name + (isNew ? " — 도감에 등록!" : "!");
+      speak("크앙! " + a.d.name + (isNew ? "! 도감에 등록했어요!" : "! 잘했어요!"));
+      sel = []; lockBoard = false;
+      if (matchedPairs === pairCount) setTimeout(roundClear, 800);
+    }, 350);
+  } else {
+    sfxHint();
+    setTimeout(function(){
+      a.c.classList.remove("open"); b.c.classList.remove("open");
+      sel = []; lockBoard = false;
+    }, 1300);
+  }
+}
+
+function roundClear(){
+  var stars = hadNew ? 2 : 1;
+  awardStars(stars, $("grid"));
+  SV.todayStars += stars; SV.rounds = (SV.rounds||0) + 1;
+  putSave(SV); /* 판이 끝날 때마다 자동 저장 */
+  $("clearStars").textContent = stars === 2 ? "⭐⭐" : "⭐";
+  $("clearMsg").textContent = "판 완성! 별 " + stars + "개!";
+  $("btnNext").textContent = (SV.todayStars >= SV.cfg.goal) ? "🌙 오늘 목표 달성!" : "다음 판 하기";
+  show($("clearBox"));
+  speak("판 완성! 별 " + stars + "개 받았어요!");
+}
+
+$("btnNext").addEventListener("click", function(){
+  hide($("clearBox"));
+  if (SV.todayStars >= SV.cfg.goal) showEnd(); else startRound();
+});
+
+function showEnd(){
+  showScreen("scrEnd");
+  $("endStats").innerHTML = "오늘 모은 별: ⭐ " + SV.todayStars + "개<br>지갑의 별: ⭐ " +
+    getWallet().stars + "개<br>도감: " + getColl().cards.filter(function(n){return n>=1 && n<=12;}).length + " / 12 마리";
+  sfxDone();
+  speak("오늘은 여기까지! 내일 또 만나!");
+}
+
+/* ---------- 도감 ---------- */
+var dexFrom = "scrStart";
+function renderDex(){
+  var coll = getColl().cards;
+  var g = $("dexGrid"); g.innerHTML = "";
+  DINOS.forEach(function(d){
+    var has = coll.indexOf(d.n) >= 0;
+    var c = document.createElement("div");
+    c.className = "dexCell" + (has ? "" : " miss");
+    c.innerHTML = '<div class="no">No.' + d.n + '</div><div class="de">' + (has ? d.e : "❓") +
+      '</div><div class="dn">' + (has ? d.name : "누굴까?") + '</div>';
+    g.appendChild(c);
+  });
+}
+$("btnDex").addEventListener("click", function(){
+  var cur = SCREENS.filter(function(s){ return !$(s).classList.contains("hidden"); })[0];
+  if (cur !== "scrDex") dexFrom = cur || "scrStart";
+  renderDex(); showScreen("scrDex");
+});
+$("btnDexBack").addEventListener("click", function(){ showScreen(dexFrom); });
+$("btnEndDex").addEventListener("click", function(){ dexFrom = "scrEnd"; renderDex(); showScreen("scrDex"); });
+
+/* ---------- 시작·코드 ---------- */
+$("btnStart").addEventListener("click", function(){
+  var ac = _ctx(); if (ac && ac.state === "suspended") { try { ac.resume(); } catch(e){} }
+  ensureDay();
+  if (SV.todayStars >= SV.cfg.goal) { showEnd(); return; }
+  startRound();
+});
+function showCodeModal(){
+  $("codeText").textContent = makeCode(Math.min(31, getColl().cards.length), Math.min(31, SV.todayStars));
+  openModal("mCode");
+}
+$("btnShowCode").addEventListener("click", showCodeModal);
+$("btnEndCode").addEventListener("click", showCodeModal);
+$("btnCodeClose").addEventListener("click", closeModal);
+$("btnEnterCode").addEventListener("click", function(){
+  $("codeIn").value = ""; $("codeMsg").textContent = "";
+  openModal("mInput");
+});
+$("btnCodeCancel").addEventListener("click", closeModal);
+$("btnCodeOk").addEventListener("click", function(){
+  var r = applyCode($("codeIn").value, function(m){ return window.confirm(m); });
+  if (r === "ok") {
+    refreshWallet(); closeModal();
+    speak("코드를 복원했어요!");
+    alert("복원 완료! 별과 도감을 불러왔어요.");
+  } else if (r === "cancel") {
+    closeModal();
+  } else {
+    $("codeMsg").textContent = "코드가 맞지 않아요. 다시 확인해 주세요.";
+    $("codeIn").classList.add("shake");
+    setTimeout(function(){ $("codeIn").classList.remove("shake"); }, 500);
+  }
+});
+
+/* ---------- 부모설정 (7+8 잠금) ---------- */
+$("btnGear").addEventListener("click", function(){
+  $("gateIn").value = ""; $("gateMsg").textContent = "";
+  openModal("mGate");
+});
+$("btnGateCancel").addEventListener("click", closeModal);
+$("btnGateOk").addEventListener("click", function(){
+  if (parseInt($("gateIn").value, 10) === 15) {
+    $("setCards").value = String(SV.cfg.cards);
+    $("setGoal").value = String(SV.cfg.goal);
+    openModal("mSet");
+  } else {
+    $("gateMsg").textContent = "다시 생각해 보세요!";
+    $("gateIn").classList.add("shake");
+    setTimeout(function(){ $("gateIn").classList.remove("shake"); }, 500);
+  }
+});
+$("btnSetCancel").addEventListener("click", closeModal);
+$("btnSetOk").addEventListener("click", function(){
+  SV.cfg.cards = parseInt($("setCards").value, 10) || 8;
+  var g = parseInt($("setGoal").value, 10);
+  SV.cfg.goal = (g >= 1 && g <= 31) ? g : 5;
+  putSave(SV);
+  closeModal();
+  $("goalBar").textContent = goalText();
+  /* 목표를 올려서 아직 안 채웠으면 끝 화면에서 시작 화면으로 복귀 */
+  if (!$("scrEnd").classList.contains("hidden") && SV.todayStars < SV.cfg.goal) showScreen("scrStart");
+});
+
+/* ---------- 초기화 ---------- */
+ensureDay();
+refreshWallet();
+showScreen("scrStart");
+</script>
+</body>
+</html>
