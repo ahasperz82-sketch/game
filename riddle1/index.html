@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>수수께끼 보물상자</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:linear-gradient(180deg,#FFF9E6 0%,#FFE9B8 100%);min-height:100vh;}
+#app{max-width:480px;margin:0 auto;min-height:100vh;padding:12px;position:relative;}
+.screen{display:none;}
+.screen.on{display:block;animation:fadein .25s;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+#hud{display:none;align-items:center;gap:8px;padding:8px 10px;background:#FFFFFFCC;
+  border-radius:16px;margin-bottom:10px;box-shadow:0 2px 6px #0002;}
+.hud-item{font-size:22px;font-weight:bold;color:#6D4C00;}
+.hud-btn{font-size:20px;font-weight:bold;border:none;background:#FFE082;color:#6D4C00;
+  border-radius:12px;padding:8px 12px;min-height:44px;}
+.gear{margin-left:auto;border:none;background:#EEE;border-radius:50%;
+  width:40px;height:40px;font-size:20px;}
+h1{color:#B85C00;font-size:30px;text-align:center;margin:8px 0;line-height:1.3;}
+h2{color:#B85C00;font-size:24px;text-align:center;}
+.mascot{font-size:88px;text-align:center;margin:24px 0 6px;}
+.sub{text-align:center;color:#8D6E63;font-size:18px;margin:4px 0 20px;}
+.btn{display:block;width:100%;min-height:64px;font-size:24px;font-weight:bold;
+  border:none;border-radius:20px;margin:10px 0;cursor:pointer;
+  box-shadow:0 4px 0 #0002;font-family:inherit;}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #0002;}
+.big{background:#FF9800;color:#fff;font-size:30px;min-height:80px;}
+.mid{background:#FFD54F;color:#6D4C00;}
+.chance{background:#B39DDB;color:#fff;min-height:56px;font-size:20px;}
+.small2{min-height:48px;font-size:18px;background:#FFF3E0;color:#B85C00;width:auto;
+  padding:0 16px;margin:8px auto 0;}
+#goalBar{background:#FFF;border-radius:12px;padding:8px;text-align:center;
+  font-size:18px;color:#795548;font-weight:bold;margin-bottom:10px;}
+#qCard{background:#FFFFFF;border-radius:20px;padding:20px 16px;text-align:center;
+  box-shadow:0 3px 8px #0002;margin-bottom:14px;}
+#qText{font-size:24px;line-height:1.5;color:#4E342E;font-weight:bold;min-height:72px;}
+.choice{background:#4FC3F7;color:#fff;}
+.choice.gone{visibility:hidden;}
+.choice.glow{background:#66BB6A;animation:glow 0.8s infinite alternate;}
+@keyframes glow{from{box-shadow:0 0 4px #66BB6A;}to{box-shadow:0 0 22px #2E7D32;}}
+.choice.wrongflash{background:#EF9A9A;}
+#feedback{min-height:32px;text-align:center;font-size:20px;color:#6A1B9A;
+  font-weight:bold;margin:6px 0;}
+#treGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;}
+.tre{background:#FFF;border-radius:16px;font-size:40px;text-align:center;
+  padding:12px 0;box-shadow:0 2px 5px #0002;}
+.tre.empty{opacity:.25;filter:grayscale(1);}
+.ov{display:none;position:fixed;inset:0;background:#0008;z-index:50;
+  align-items:center;justify-content:center;padding:16px;}
+.ov.on{display:flex;}
+.ov-box{background:#FFF;border-radius:24px;padding:24px 18px;max-width:420px;width:100%;
+  text-align:center;max-height:90vh;overflow:auto;}
+.ov-box h3{color:#B85C00;font-size:22px;margin:0 0 12px;}
+.codebox{font-size:26px;font-weight:bold;letter-spacing:2px;color:#1565C0;
+  background:#E3F2FD;border-radius:12px;padding:14px 6px;margin:12px 0;word-break:break-all;}
+input,select{width:100%;min-height:52px;font-size:20px;border:2px solid #FFB74D;
+  border-radius:12px;padding:6px 10px;margin:6px 0;font-family:inherit;background:#FFF;}
+#chestBox{font-size:100px;margin:10px 0;}
+.shake{display:inline-block;animation:shake .6s;}
+@keyframes shake{0%,100%{transform:rotate(0);}20%{transform:rotate(-12deg);}
+  40%{transform:rotate(12deg);}60%{transform:rotate(-8deg);}80%{transform:rotate(8deg);}}
+.pop{display:inline-block;animation:pop .5s;}
+@keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+.fly{position:fixed;font-size:38px;z-index:99;transition:all .8s cubic-bezier(.5,-0.2,.8,1);
+  pointer-events:none;}
+.bank-row{display:flex;align-items:center;gap:6px;background:#FFF;border-radius:10px;
+  padding:8px;margin:6px 0;text-align:left;}
+.bank-q{flex:1;font-size:15px;color:#4E342E;line-height:1.3;}
+.bank-btn{border:none;border-radius:8px;min-height:44px;min-width:52px;font-size:15px;
+  font-weight:bold;font-family:inherit;}
+.b-edit{background:#B3E5FC;color:#01579B;}
+.b-del{background:#FFCDD2;color:#B71C1C;}
+.plabel{display:block;text-align:left;font-size:16px;color:#795548;font-weight:bold;margin-top:12px;}
+#scr_parent{background:#FFF8E1;border-radius:16px;padding:12px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="hud">
+    <div class="hud-item">⭐ <span class="hud-stars">0</span></div>
+    <button id="btnColl" class="hud-btn">🎁 <span id="hudTre">0</span></button>
+    <button id="btnGear" class="gear" aria-label="부모 설정">⚙️</button>
+  </div>
+
+  <div id="scr_start" class="screen on">
+    <div class="mascot">🧰</div>
+    <h1>수수께끼 보물상자</h1>
+    <p class="sub">수수께끼를 맞히고<br>반짝반짝 보물을 모아요!</p>
+    <button id="btnStart" class="btn big">▶ 시작</button>
+    <button id="btnShowCode" class="btn mid">🔑 이어하기 코드 보기</button>
+    <button id="btnEnterCode" class="btn mid">⌨️ 코드 입력</button>
+  </div>
+
+  <div id="scr_game" class="screen">
+    <div id="goalBar">오늘의 수수께끼 <span id="goalNow">0</span> / <span id="goalMax">5</span></div>
+    <div id="qCard">
+      <div id="qText"></div>
+      <button id="btnSpeak" class="btn small2">🔊 다시 듣기</button>
+    </div>
+    <div id="choices"></div>
+    <div id="feedback"></div>
+    <button id="btnChance" class="btn chance">💡 힌트 찬스 (어른 힌트 듣기)</button>
+  </div>
+
+  <div id="scr_coll" class="screen">
+    <h2>🎁 내 보물 상자</h2>
+    <p class="sub" id="collMsg"></p>
+    <div id="treGrid"></div>
+    <button id="btnCollBack" class="btn mid">돌아가기</button>
+  </div>
+
+  <div id="scr_end" class="screen">
+    <div class="mascot">🌙</div>
+    <h1>오늘은 여기까지!<br>내일 또 만나!</h1>
+    <p class="sub" id="endMsg"></p>
+    <button id="btnEndColl" class="btn mid">🎁 보물 구경하기</button>
+    <button id="btnEndCode" class="btn mid">🔑 이어하기 코드 보기</button>
+  </div>
+
+  <div id="scr_parent" class="screen">
+    <h2>⚙️ 부모 설정</h2>
+    <label class="plabel">오늘 목표 수수께끼 개수 (1~20)</label>
+    <input id="setGoal" type="number" min="1" max="20">
+    <label class="plabel">음성 속도</label>
+    <select id="setRate">
+      <option value="0.7">느리게</option>
+      <option value="0.9">보통</option>
+      <option value="1.1">빠르게</option>
+    </select>
+    <label class="plabel">📚 우리집 문제은행</label>
+    <div id="bankList"></div>
+    <label class="plabel" id="bankFormTitle">새 문제 추가</label>
+    <input id="bq" placeholder="문제 (예: 다리가 네 개인데 못 걷는 것은?)">
+    <input id="ba" placeholder="정답 (예: 책상)">
+    <input id="bw1" placeholder="오답 1">
+    <input id="bw2" placeholder="오답 2">
+    <input id="bex" placeholder="정답 한 줄 설명 (선택)">
+    <button id="btnBankSave" class="btn mid" style="min-height:52px;font-size:19px;">문제 저장</button>
+    <button id="btnBankCancel" class="btn" style="display:none;background:#EEE;color:#555;min-height:48px;font-size:17px;">수정 취소</button>
+    <button id="btnParentClose" class="btn big" style="font-size:22px;min-height:64px;">저장하고 닫기</button>
+  </div>
+
+</div>
+
+<div id="ov_gate" class="ov">
+  <div class="ov-box">
+    <h3>부모님 확인 문제</h3>
+    <p style="font-size:26px;font-weight:bold;">7 + 8 = ?</p>
+    <input id="gateInput" type="number" inputmode="numeric" placeholder="정답을 쓰세요">
+    <button id="btnGateOk" class="btn mid">확인</button>
+    <button id="btnGateNo" class="btn" style="background:#EEE;color:#555;">닫기</button>
+  </div>
+</div>
+
+<div id="ov_codeview" class="ov">
+  <div class="ov-box">
+    <h3>🔑 이어하기 코드</h3>
+    <p style="font-size:16px;color:#795548;">이 코드를 적어 두면<br>다른 기기에서 이어할 수 있어요.</p>
+    <div class="codebox" id="codeOut"></div>
+    <button id="btnCodeViewClose" class="btn mid">닫기</button>
+  </div>
+</div>
+
+<div id="ov_codein" class="ov">
+  <div class="ov-box">
+    <h3>⌨️ 코드 입력</h3>
+    <input id="codeIn" placeholder="예: AB2C-DE3F-GH4J-KLM" autocapitalize="characters">
+    <button id="btnCodeApply" class="btn mid">불러오기</button>
+    <button id="btnCodeInClose" class="btn" style="background:#EEE;color:#555;">닫기</button>
+  </div>
+</div>
+
+<div id="ov_chance" class="ov">
+  <div class="ov-box">
+    <div style="font-size:60px;">🙋💡</div>
+    <h3>옆에 있는 어른 찬스!</h3>
+    <p style="font-size:20px;color:#4E342E;">힌트를 들어 보세요</p>
+    <button id="btnChanceDone" class="btn mid">힌트 들었어요, 계속하기</button>
+  </div>
+</div>
+
+<div id="ov_chest" class="ov">
+  <div class="ov-box">
+    <div id="chestBox">🎁</div>
+    <h3 id="chestMsg">보물상자가 열려요!</h3>
+    <button id="btnChestNext" class="btn big" style="font-size:24px;">다음</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   공통 저장 라이브러리 v1 — 부록 A 공통 저장 규격 v2 구현
+   모든 게임에 이 블록을 그대로 <script> 안에 붙여 넣는다.
+   게임별로 바꾸는 것은 GAME_ID 한 줄뿐이다.
+   ============================================================ */
+var GAME_ID = "riddle1"; // 저장 키: game_save_riddle1
+
+/* 세이브 코드 문자셋: 영문 대문자+숫자 32자, O·0·I·1 제외 */
+var CS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* ---------- localStorage 안전 입출력 ---------- */
+function lsGet(k, def) {
+  try {
+    var v = JSON.parse(localStorage.getItem(k));
+    return (v && typeof v === "object") ? v : JSON.parse(JSON.stringify(def));
+  } catch (e) { return JSON.parse(JSON.stringify(def)); }
+}
+function lsSet(k, obj) {
+  try { localStorage.setItem(k, JSON.stringify(obj)); } catch (e) { /* 저장 실패해도 게임은 계속 */ }
+}
+
+/* ---------- 공용 4키 (있는 키는 절대 지우지 않고 읽어서 이어 씀) ---------- */
+function getWallet()  { return lsGet("game_wallet",     {v:1, stars:0, total:0}); }
+function getCloset()  { return lsGet("game_closet",     {v:1, owned:[], wearing:{}}); }
+function getColl()    { return lsGet("game_collection", {v:1, badges:[], cards:[]}); }
+function getSave(def) { return lsGet("game_save_" + GAME_ID, def || {}); }
+function putWallet(w) { lsSet("game_wallet", w); }
+function putCloset(c) { lsSet("game_closet", c); }
+function putColl(c)   { lsSet("game_collection", c); }
+function putSave(s)   { lsSet("game_save_" + GAME_ID, s); }
+
+/* 별 획득: stars와 total을 함께 올린다. total은 절대 줄지 않는다 */
+function addStars(n) {
+  var w = getWallet(); w.stars += n; w.total += n; putWallet(w);
+}
+/* 별 사용(상점): stars만 줄인다. 부족하면 false */
+function spendStars(n) {
+  var w = getWallet(); if (w.stars < n) return false;
+  w.stars -= n; putWallet(w); return true;
+}
+/* 뱃지·카드 획득(중복 방지) */
+function addBadge(n) { var c = getColl(); if (c.badges.indexOf(n) < 0) { c.badges.push(n); putColl(c); } }
+function addCard(n)  { var c = getColl(); if (c.cards.indexOf(n)  < 0) { c.cards.push(n);  putColl(c); } }
+
+/* ---------- 세이브 코드 (15자: 데이터 14 + 검사 1, 4자마다 하이픈) ----------
+   구성: stars(2) total(2) closet소유비트(3) badges비트(3) cards비트(2) 진행p1(1) 진행p2(1)
+   숫자 2자 = 0~1023, 비트 3자 = 항목 1~15번, 비트 2자 = 항목 1~10번, 1자 = 0~31 */
+function enc2(n) { n = Math.max(0, Math.min(1023, Math.round(n||0))); return CS[Math.floor(n/32)] + CS[n%32]; }
+function dec2(s) { return CS.indexOf(s[0])*32 + CS.indexOf(s[1]); }
+function encBits(arr, chars) { /* 번호 배열 -> chars글자 비트마스크 */
+  var bits = 0;
+  (arr||[]).forEach(function(x){ x = parseInt(x,10); if (x >= 1 && x <= chars*5) bits |= (1 << (x-1)); });
+  var out = "";
+  for (var i = chars-1; i >= 0; i--) out += CS[(bits >> (i*5)) & 31];
+  return out;
+}
+function decBits(s) { /* 글자들 -> 번호 배열 */
+  var bits = 0, i;
+  for (i = 0; i < s.length; i++) bits = (bits << 5) | CS.indexOf(s[i]);
+  var arr = [];
+  for (i = 1; i <= s.length*5; i++) if (bits & (1 << (i-1))) arr.push(i);
+  return arr;
+}
+function makeCode(p1, p2) {
+  var w = getWallet(), c = getCloset(), k = getColl();
+  var raw = enc2(w.stars) + enc2(w.total) + encBits(c.owned,3) + encBits(k.badges,3) + encBits(k.cards,2) + CS[Math.max(0,Math.min(31,p1||0))] + CS[Math.max(0,Math.min(31,p2||0))];
+  var sum = 0; for (var i = 0; i < raw.length; i++) sum += CS.indexOf(raw[i]);
+  raw += CS[sum % 32];
+  return raw.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+function parseCode(str) {
+  var raw = (str||"").toUpperCase().replace(/[^A-Z2-9]/g, "");
+  if (raw.length !== 15) return null;
+  var sum = 0, i, x;
+  for (i = 0; i < 14; i++) { x = CS.indexOf(raw[i]); if (x < 0) return null; sum += x; }
+  if (CS[sum % 32] !== raw[14]) return null; /* 검사 글자 불일치 = 오타 */
+  return {
+    stars:  dec2(raw.slice(0,2)),
+    total:  dec2(raw.slice(2,4)),
+    owned:  decBits(raw.slice(4,7)),
+    badges: decBits(raw.slice(7,10)),
+    cards:  decBits(raw.slice(10,12)),
+    p1: CS.indexOf(raw[12]),
+    p2: CS.indexOf(raw[13])
+  };
+}
+/* 복원 적용: 재산이 지금보다 적으면 confirmFn(안내문)이 true일 때만 덮어씀.
+   total은 어떤 경우에도 큰 값을 유지한다. 반환: "ok" | "cancel" | "bad" */
+function applyCode(str, confirmFn) {
+  var d = parseCode(str);
+  if (!d) return "bad";
+  var w = getWallet();
+  if (d.total < w.total || d.stars < w.stars) {
+    var msg = "입력한 코드의 재산(별 " + d.stars + "개)이 지금 기기(별 " + w.stars + "개)보다 적어요. 그래도 코드 쪽으로 되돌릴까요?";
+    if (!confirmFn(msg)) return "cancel";
+  }
+  putWallet({v:1, stars:d.stars, total:Math.max(d.total, w.total)});
+  var c = getCloset(); c.owned = d.owned; putCloset(c);
+  putColl({v:1, badges:d.badges, cards:d.cards});
+  return "ok";
+}
+
+/* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+function speak(txt) {
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(txt);
+    u.lang = "ko-KR"; u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/* ---------- 효과음(WebAudio, 외부 파일 없음) ---------- */
+var _ac = null;
+function _ctx() { if (!_ac) { try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return _ac; }
+function beep(freq, dur, type) {
+  var ac = _ctx(); if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (dur||0.15));
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + (dur||0.15));
+}
+function sfxGood()  { beep(660,0.12); setTimeout(function(){beep(880,0.12);},110); setTimeout(function(){beep(1320,0.2);},220); }
+function sfxHint()  { beep(440,0.15,"triangle"); }
+function sfxDone()  { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.18);}, i*140); }); }
+/* ============================================================ */
+
+/* ============================================================
+   게임 본체: 수수께끼 보물상자 (게임ID riddle1)
+   ============================================================ */
+
+/* 음성 속도 설정: 라이브러리 speak()는 그대로 쓰고,
+   speechSynthesis 단계에서 속도만 부모 설정값으로 맞춘다. */
+var TTS_RATE = 0.9;
+(function(){
+  try {
+    if (window.speechSynthesis && window.speechSynthesis.speak) {
+      var orig = speechSynthesis.speak.bind(speechSynthesis);
+      speechSynthesis.speak = function(u){ try { u.rate = TTS_RATE; } catch(e){} orig(u); };
+    }
+  } catch(e){}
+})();
+
+var TREASURES = ["👑","💎","🪙","💍","🏆","🔮","📿","🗝️","⚜️","🎖️","🧿","🥇","💠","🌟","🎀"];
+
+var DEFAULT_BANK = [
+  {q:"다리가 네 개인데 걷지 못하는 것은?", a:"책상", w1:"강아지", w2:"고양이", ex:"책상은 다리가 네 개지만 스스로 걷지 못해요."},
+  {q:"밤하늘에서 반짝반짝 빛나는 것은?", a:"별", w1:"돌멩이", w2:"신발", ex:"별은 밤하늘에서 반짝반짝 빛나요."},
+  {q:"아무리 먹어도 배부르지 않은 것은?", a:"나이", w1:"밥", w2:"사과", ex:"나이는 한 살씩 먹지만 배는 부르지 않아요."},
+  {q:"세상에서 가장 빠른 새는?", a:"눈 깜짝할 새", w1:"참새", w2:"독수리", ex:"눈 깜짝할 새는 눈을 한 번 깜빡이는 아주 짧은 시간이에요."},
+  {q:"문은 문인데 열 수 없는 문은?", a:"소문", w1:"대문", w2:"창문", ex:"소문은 이야기라서 손으로 열 수 없어요."},
+  {q:"불을 끄면 나타나고 불을 켜면 사라지는 것은?", a:"어둠", w1:"책", w2:"인형", ex:"불을 끄면 깜깜한 어둠이 찾아와요."},
+  {q:"하늘에서 내려오는 하얀 솜사탕 같은 것은?", a:"눈", w1:"비", w2:"바람", ex:"겨울에 내리는 눈은 하얗고 폭신폭신해요."},
+  {q:"자를수록 점점 커지는 것은?", a:"구멍", w1:"종이", w2:"리본", ex:"종이를 자르면 자를수록 구멍이 커져요."},
+  {q:"낮에는 숨고 밤에만 나오는 것은?", a:"달", w1:"해", w2:"자동차", ex:"달은 밤이 되면 하늘에 떠올라요."},
+  {q:"아무리 빨리 달려도 앞지를 수 없는 것은?", a:"그림자", w1:"자전거", w2:"거북이", ex:"그림자는 언제나 나랑 딱 붙어 다녀요."}
+];
+
+var save = getSave({v:1, bank:null, goal:5, rate:0.9, date:"", doneToday:0, solved:0});
+if (!save.bank || !save.bank.length) save.bank = JSON.parse(JSON.stringify(DEFAULT_BANK));
+if (!save.goal) save.goal = 5;
+if (!save.rate) save.rate = 0.9;
+TTS_RATE = save.rate;
+
+function todayStr(){ var d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function resetDaily(){
+  if (save.date !== todayStr()) { save.date = todayStr(); save.doneToday = 0; putSave(save); }
+}
+resetDaily();
+
+/* ---------- 화면 유틸 ---------- */
+function $(id){ return document.getElementById(id); }
+var HUD_ON = {scr_game:1, scr_coll:1, scr_end:1};
+function show(id){
+  var s = document.querySelectorAll(".screen");
+  for (var i = 0; i < s.length; i++) s[i].classList.remove("on");
+  $(id).classList.add("on");
+  $("hud").style.display = HUD_ON[id] ? "flex" : "none";
+  updateHud();
+}
+function updateHud(){
+  var w = getWallet(), c = getColl();
+  var els = document.querySelectorAll(".hud-stars");
+  for (var i = 0; i < els.length; i++) els[i].textContent = w.stars;
+  $("hudTre").textContent = c.badges.length;
+  $("goalNow").textContent = Math.min(save.doneToday, save.goal);
+  $("goalMax").textContent = save.goal;
+}
+function flyStar(count){
+  var t = $("hud").querySelector(".hud-item").getBoundingClientRect();
+  for (var i = 0; i < count; i++) {
+    (function(i){
+      setTimeout(function(){
+        var s = document.createElement("div");
+        s.className = "fly"; s.textContent = "⭐";
+        s.style.left = "45%"; s.style.top = "45%";
+        document.body.appendChild(s);
+        requestAnimationFrame(function(){
+          requestAnimationFrame(function(){
+            s.style.left = t.left + "px"; s.style.top = t.top + "px";
+            s.style.transform = "scale(.4)"; s.style.opacity = ".6";
+          });
+        });
+        setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); updateHud(); }, 850);
+      }, i * 220);
+    })(i);
+  }
+}
+
+/* ---------- 라운드 진행 ---------- */
+var cur = null;      /* 현재 문제 */
+var tries = 0;       /* 이번 문제 오답 횟수 */
+var usedChance = false;
+var guided = false;  /* 3번째: 정답 따라 누르기 모드 */
+var lastQIdx = -1;
+
+function shuffle(a){
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function nextRound(){
+  if (save.doneToday >= save.goal) { showEnd(); return; }
+  var idx;
+  if (save.bank.length === 1) idx = 0;
+  else { do { idx = Math.floor(Math.random() * save.bank.length); } while (idx === lastQIdx); }
+  lastQIdx = idx;
+  cur = save.bank[idx];
+  tries = 0; usedChance = false; guided = false;
+  $("qText").textContent = cur.q;
+  $("feedback").textContent = "";
+  var opts = shuffle([cur.a, cur.w1, cur.w2]);
+  var box = $("choices"); box.innerHTML = "";
+  opts.forEach(function(o){
+    var b = document.createElement("button");
+    b.className = "btn choice"; b.textContent = o;
+    b.onclick = function(){ pick(b, o); };
+    box.appendChild(b);
+  });
+  show("scr_game");
+  speak("수수께끼! " + cur.q);
+}
+
+function pick(btn, val){
+  if (!cur) return;
+  if (val === cur.a) {
+    var stars = 0;
+    if (guided) stars = 0;
+    else if (tries === 0 && !usedChance) stars = 2;
+    else stars = 1;
+    finishRound(btn, stars);
+  } else {
+    tries++;
+    btn.classList.add("wrongflash");
+    setTimeout(function(){ btn.classList.remove("wrongflash"); }, 500);
+    sfxHint();
+    if (tries === 1) {
+      $("feedback").textContent = "괜찮아요! 다시 잘 들어 볼까요?";
+      speak("괜찮아요. 다시 잘 들어 볼까요? " + cur.q);
+    } else if (tries === 2) {
+      /* 힌트: 오답 보기 하나 제거 */
+      var btns = $("choices").querySelectorAll(".choice");
+      for (var i = 0; i < btns.length; i++) {
+        if (btns[i].textContent !== cur.a && !btns[i].classList.contains("gone")) {
+          btns[i].classList.add("gone"); break;
+        }
+      }
+      $("feedback").textContent = "💡 힌트! 보기 하나를 치웠어요.";
+      speak("힌트! 보기 하나를 치웠어요. 둘 중에 골라 보세요.");
+    } else {
+      /* 3번째: 정답 공개 + 따라 누르기 */
+      guided = true;
+      var bs = $("choices").querySelectorAll(".choice");
+      for (var j = 0; j < bs.length; j++) {
+        if (bs[j].textContent === cur.a) bs[j].classList.add("glow");
+        else bs[j].classList.add("gone");
+      }
+      $("feedback").textContent = "정답은 「" + cur.a + "」! 반짝이는 버튼을 눌러 보세요.";
+      speak("정답은 " + cur.a + "! " + (cur.ex || "") + " 반짝이는 버튼을 따라 눌러 보세요.");
+    }
+  }
+}
+
+function nextBadgeId(){
+  var b = getColl().badges;
+  for (var i = 1; i <= 15; i++) if (b.indexOf(i) < 0) return i;
+  return 0;
+}
+
+function finishRound(btn, stars){
+  cur = null;
+  sfxGood();
+  btn.classList.add("glow");
+  if (stars > 0) { addStars(stars); flyStar(stars); }
+  var bid = nextBadgeId();
+  if (bid) addBadge(bid);
+  save.doneToday++; save.solved++;
+  putSave(save); /* 판이 끝날 때마다 자동 저장 */
+  updateHud();
+  var tre = bid ? TREASURES[(bid - 1) % TREASURES.length] : TREASURES[Math.floor(Math.random()*TREASURES.length)];
+  var starTxt = stars === 2 ? "별 2개!" : (stars === 1 ? "별 1개!" : "잘 따라 했어요!");
+  setTimeout(function(){
+    $("chestBox").innerHTML = "<span class='shake'>🎁</span>";
+    $("chestMsg").textContent = "정답이에요! " + starTxt;
+    $("ov_chest").classList.add("on");
+    speak("정답이에요! 보물상자가 열려요!");
+    setTimeout(function(){
+      $("chestBox").innerHTML = "<span class='pop'>" + tre + "</span>";
+      $("chestMsg").textContent = "보물 획득! " + starTxt;
+    }, 800);
+  }, 500);
+}
+
+$("btnChestNext").onclick = function(){
+  $("ov_chest").classList.remove("on");
+  if (save.doneToday >= save.goal) showEnd(); else nextRound();
+};
+
+function showEnd(){
+  show("scr_end");
+  $("endMsg").textContent = "오늘 수수께끼 " + save.doneToday + "개를 풀었어요. 정말 멋져요!";
+  sfxDone();
+  speak("오늘은 여기까지! 정말 잘했어요. 내일 또 만나요!");
+}
+
+/* ---------- 보물 수집 화면 ---------- */
+var collFrom = "scr_game";
+function showColl(from){
+  collFrom = from;
+  var b = getColl().badges;
+  var g = $("treGrid"); g.innerHTML = "";
+  for (var i = 1; i <= 15; i++) {
+    var d = document.createElement("div");
+    d.className = "tre" + (b.indexOf(i) < 0 ? " empty" : "");
+    d.textContent = TREASURES[(i - 1) % TREASURES.length];
+    g.appendChild(d);
+  }
+  $("collMsg").textContent = "지금까지 모은 보물: " + b.length + "개";
+  show("scr_coll");
+}
+$("btnColl").onclick = function(){ showColl(save.doneToday >= save.goal ? "scr_end" : "scr_game"); };
+$("btnEndColl").onclick = function(){ showColl("scr_end"); };
+$("btnCollBack").onclick = function(){
+  if (collFrom === "scr_end" || save.doneToday >= save.goal) showEnd();
+  else show("scr_game");
+};
+
+/* ---------- 힌트 찬스 ---------- */
+$("btnChance").onclick = function(){
+  $("ov_chance").classList.add("on");
+  sfxHint();
+  speak("옆에 있는 어른 찬스! 힌트를 들어 보세요.");
+};
+$("btnChanceDone").onclick = function(){
+  usedChance = true;
+  $("ov_chance").classList.remove("on");
+  $("feedback").textContent = "힌트를 듣고 다시 골라 보세요!";
+};
+
+/* ---------- 시작·코드 ---------- */
+$("btnStart").onclick = function(){
+  _ctx(); /* 소리 잠금 해제 */
+  sfxGood();
+  resetDaily();
+  if (save.doneToday >= save.goal) { showEnd(); return; }
+  nextRound();
+};
+$("btnSpeak").onclick = function(){ if (cur) speak(cur.q); };
+
+function openCodeView(){
+  $("codeOut").textContent = makeCode(Math.min(save.doneToday,31), Math.min(save.solved,31));
+  $("ov_codeview").classList.add("on");
+}
+$("btnShowCode").onclick = openCodeView;
+$("btnEndCode").onclick = openCodeView;
+$("btnCodeViewClose").onclick = function(){ $("ov_codeview").classList.remove("on"); };
+
+$("btnEnterCode").onclick = function(){ $("codeIn").value = ""; $("ov_codein").classList.add("on"); };
+$("btnCodeInClose").onclick = function(){ $("ov_codein").classList.remove("on"); };
+$("btnCodeApply").onclick = function(){
+  var r = applyCode($("codeIn").value, function(m){ return window.confirm(m); });
+  if (r === "ok") {
+    $("ov_codein").classList.remove("on");
+    updateHud();
+    alert("코드를 불러왔어요! 이어서 놀 수 있어요.");
+  } else if (r === "bad") {
+    alert("코드를 다시 확인해 주세요. 글자가 틀린 것 같아요.");
+  }
+};
+
+/* ---------- 부모 설정 (톱니 → 7+8 확인) ---------- */
+$("btnGear").onclick = function(){ $("gateInput").value = ""; $("ov_gate").classList.add("on"); };
+$("btnGateNo").onclick = function(){ $("ov_gate").classList.remove("on"); };
+$("btnGateOk").onclick = function(){
+  if (parseInt($("gateInput").value, 10) === 15) {
+    $("ov_gate").classList.remove("on");
+    openParent();
+  } else {
+    alert("정답이 아니에요. 부모님께 물어보세요!");
+  }
+};
+
+var editIdx = -1;
+function openParent(){
+  $("setGoal").value = save.goal;
+  $("setRate").value = String(save.rate);
+  clearBankForm();
+  renderBank();
+  show("scr_parent");
+}
+function renderBank(){
+  var list = $("bankList"); list.innerHTML = "";
+  save.bank.forEach(function(item, i){
+    var row = document.createElement("div"); row.className = "bank-row";
+    var q = document.createElement("div"); q.className = "bank-q";
+    q.textContent = (i + 1) + ". " + item.q + " (정답: " + item.a + ")";
+    var be = document.createElement("button"); be.className = "bank-btn b-edit"; be.textContent = "수정";
+    be.onclick = function(){
+      editIdx = i;
+      $("bankFormTitle").textContent = (i + 1) + "번 문제 수정 중";
+      $("bq").value = item.q; $("ba").value = item.a;
+      $("bw1").value = item.w1; $("bw2").value = item.w2;
+      $("bex").value = item.ex || "";
+      $("btnBankCancel").style.display = "block";
+    };
+    var bd = document.createElement("button"); bd.className = "bank-btn b-del"; bd.textContent = "삭제";
+    bd.onclick = function(){
+      if (save.bank.length <= 1) { alert("문제가 최소 1개는 있어야 해요."); return; }
+      if (window.confirm("이 문제를 삭제할까요?\n" + item.q)) {
+        save.bank.splice(i, 1); putSave(save); renderBank(); clearBankForm();
+      }
+    };
+    row.appendChild(q); row.appendChild(be); row.appendChild(bd);
+    list.appendChild(row);
+  });
+}
+function clearBankForm(){
+  editIdx = -1;
+  $("bankFormTitle").textContent = "새 문제 추가";
+  ["bq","ba","bw1","bw2","bex"].forEach(function(id){ $(id).value = ""; });
+  $("btnBankCancel").style.display = "none";
+}
+$("btnBankCancel").onclick = clearBankForm;
+$("btnBankSave").onclick = function(){
+  var q = $("bq").value.trim(), a = $("ba").value.trim();
+  var w1 = $("bw1").value.trim(), w2 = $("bw2").value.trim();
+  var ex = $("bex").value.trim();
+  if (!q || !a || !w1 || !w2) { alert("문제, 정답, 오답 2개를 모두 써 주세요."); return; }
+  var item = {q:q, a:a, w1:w1, w2:w2, ex:ex};
+  if (editIdx >= 0) save.bank[editIdx] = item; else save.bank.push(item);
+  putSave(save); /* 문제은행은 game_save_riddle1에 함께 저장 */
+  renderBank(); clearBankForm();
+};
+$("btnParentClose").onclick = function(){
+  var g = parseInt($("setGoal").value, 10);
+  if (g >= 1 && g <= 20) save.goal = g;
+  save.rate = parseFloat($("setRate").value) || 0.9;
+  TTS_RATE = save.rate;
+  putSave(save);
+  if (save.doneToday >= save.goal) showEnd();
+  else if (cur) show("scr_game");
+  else show("scr_start");
+};
+
+updateHud();
+</script>
+</body>
+</html>
