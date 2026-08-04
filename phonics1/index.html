@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>파닉스 앵무새</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:linear-gradient(180deg,#FFF6D8 0%,#DFF6FF 60%,#E8FFE8 100%);min-height:100vh}
+#app{max-width:480px;min-width:300px;margin:0 auto;padding:10px 12px 24px;position:relative}
+.topbar{display:flex;align-items:center;gap:8px;background:#FFFFFFCC;border-radius:16px;
+  padding:8px 12px;box-shadow:0 2px 6px #0002;position:sticky;top:6px;z-index:5}
+#walletBox{font-size:22px;font-weight:bold;color:#E8890C}
+#stageBox{font-size:22px;flex:1;text-align:center}
+.gear{min-height:44px!important;min-width:44px;font-size:20px;background:#EEE;border-radius:12px;
+  border:none;padding:6px}
+button{min-height:64px;font-size:22px;font-weight:bold;border:none;border-radius:18px;
+  padding:12px 16px;cursor:pointer;box-shadow:0 3px 0 #0002;color:#5B3A00}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #0002}
+.big{width:100%;margin:8px 0;font-size:26px}
+.b-start{background:#FFD34D}
+.b-blue{background:#9EDCFF}
+.b-green{background:#B5F0B5}
+.b-pink{background:#FFC9DE}
+.b-purple{background:#DCC9FF}
+.b-gray{background:#E8E8E8;font-size:18px;min-height:56px}
+.card{background:#FFFFFFE6;border-radius:20px;padding:16px;margin:12px 0;box-shadow:0 3px 8px #0002;text-align:center}
+h1{font-size:30px;text-align:center;color:#4A6B00;margin:16px 0 4px}
+.hide{display:none!important}
+#bigLetter{font-size:88px;font-weight:bold;color:#2A6BC0;line-height:1}
+#bigEmoji{font-size:64px;margin:6px 0}
+#bigWord{font-size:34px;color:#666;letter-spacing:2px}
+#parrot{font-size:56px;transition:transform .3s}
+#parrot.listen{animation:tilt 1s infinite alternate}
+#parrot.dance{animation:dance .5s infinite alternate}
+@keyframes tilt{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}
+@keyframes dance{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-14px) rotate(8deg)}}
+#msg{font-size:20px;min-height:30px;color:#333;font-weight:bold}
+.rowbtn{display:flex;gap:8px}
+.rowbtn button{flex:1;font-size:19px;padding:10px 4px}
+#recBox{background:#FFF3F3;border-radius:16px;padding:10px;margin-top:10px;text-align:left}
+#recBox h3{margin:2px 0 6px;font-size:17px;color:#B04A4A}
+.recItem{display:flex;align-items:center;gap:6px;margin:5px 0}
+.recItem span{flex:1;font-size:16px}
+.recItem button{min-height:44px;min-width:52px;font-size:16px;padding:4px}
+#goalBar{font-size:22px;letter-spacing:3px;margin:6px 0}
+.notice{font-size:14px;color:#777;text-align:center;margin-top:10px}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:20}
+.mbox{background:#fff;border-radius:20px;padding:18px;width:88%;max-width:420px;max-height:86vh;overflow:auto}
+.mbox h2{margin:4px 0 10px;font-size:22px;text-align:center}
+.mbox label{display:block;font-size:17px;margin:10px 0 4px;font-weight:bold}
+.mbox input,.mbox select{width:100%;font-size:20px;padding:10px;border:2px solid #CCC;border-radius:12px}
+#codeOut{font-size:24px;font-weight:bold;text-align:center;letter-spacing:2px;background:#F2F7FF;
+  border-radius:12px;padding:14px 6px;margin:10px 0;word-break:break-all}
+.flystar{position:fixed;z-index:99;font-size:34px;transition:transform .8s ease-in,opacity .8s;pointer-events:none}
+#onRec{display:inline-block;background:#FF5252;color:#fff;border-radius:12px;padding:4px 12px;
+  font-size:18px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+.endface{font-size:70px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div id="walletBox">⭐ <span id="walletStars">0</span></div>
+    <div id="stageBox">🥚 1단계</div>
+    <button class="gear" id="gearBtn" aria-label="부모설정">⚙️</button>
+  </div>
+
+  <!-- 시작 화면 -->
+  <div id="scrStart">
+    <h1>🦜 파닉스 앵무새</h1>
+    <div class="card">
+      <div style="font-size:64px">🦜</div>
+      <p style="font-size:19px">알파벳 첫소리를 듣고,<br>말하고, 비교해 봐요!</p>
+      <button class="big b-start" id="btnStart">▶ 시작!</button>
+      <button class="big b-blue" id="btnShowCode">🔑 이어하기 코드 보기</button>
+      <button class="big b-green" id="btnEnterCode">⌨️ 코드 입력</button>
+      <p class="notice">🔒 마이크 녹음은 https 주소(자물쇠 표시)에서만 동작해요.</p>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div id="scrGame" class="hide">
+    <div class="card">
+      <div id="goalBar">오늘의 별 ☆☆☆☆☆</div>
+      <div id="bigLetter">A</div>
+      <div id="bigEmoji">🍎</div>
+      <div id="bigWord">apple</div>
+      <div><span id="parrot">🥚</span></div>
+      <div id="msg">앵무새랑 소리 놀이 해요!</div>
+      <div id="recState" class="hide"><span id="onRec">🎙️ 녹음 중...</span></div>
+    </div>
+    <div class="rowbtn">
+      <button class="b-blue" id="btnListen">🔊 듣기</button>
+      <button class="b-pink" id="btnSpeak">🎙️ 말하기</button>
+    </div>
+    <div class="rowbtn" style="margin-top:8px">
+      <button class="b-purple" id="btnMine">▶ 내 소리</button>
+      <button class="b-green" id="btnOrig">▶ 원래 소리</button>
+    </div>
+    <button class="big b-gray hide" id="btnFallbackDone">🎤 크게 말했어요! (마이크 없이)</button>
+    <button class="big b-start hide" id="btnNext">➡ 다음 글자로!</button>
+    <div id="recBox">
+      <h3>📼 녹음 보관함 (최근 5개, 이 기기 안에만 보관해요)</h3>
+      <div id="recList"><span style="font-size:15px;color:#999">아직 녹음이 없어요.</span></div>
+    </div>
+    <p class="notice">🔒 마이크는 https 주소(자물쇠 표시)에서만 동작해요. 마이크가 안 되면 버튼으로 놀 수 있어요.</p>
+  </div>
+
+  <!-- 오늘 끝 화면 -->
+  <div id="scrEnd" class="hide">
+    <div class="card">
+      <div class="endface"><span id="endParrot" class="dance" style="display:inline-block">🦜</span></div>
+      <h1 style="color:#D06000">오늘은 여기까지!<br>내일 또 만나!</h1>
+      <p style="font-size:20px" id="endMsg">앵무새가 축하 춤을 춰요! 🎉</p>
+      <div id="endStars" style="font-size:30px">⭐⭐⭐⭐⭐</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   공통 저장 라이브러리 v1 — 부록 A 공통 저장 규격 v2 구현
+   모든 게임에 이 블록을 그대로 스크립트 안에 붙여 넣는다.
+   게임별로 바꾸는 것은 GAME_ID 한 줄뿐이다.
+   저장 키: game_wallet / game_closet / game_collection / game_save_phonics1
+   ============================================================ */
+var GAME_ID = "phonics1"; // 게임마다 이 줄만 변경
+
+/* 세이브 코드 문자셋: 영문 대문자+숫자 32자, O·0·I·1 제외 */
+var CS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* ---------- localStorage 안전 입출력 ---------- */
+function lsGet(k, def) {
+  try {
+    var v = JSON.parse(localStorage.getItem(k));
+    return (v && typeof v === "object") ? v : JSON.parse(JSON.stringify(def));
+  } catch (e) { return JSON.parse(JSON.stringify(def)); }
+}
+function lsSet(k, obj) {
+  try { localStorage.setItem(k, JSON.stringify(obj)); } catch (e) { /* 저장 실패해도 게임은 계속 */ }
+}
+
+/* ---------- 공용 4키 (있는 키는 절대 지우지 않고 읽어서 이어 씀) ---------- */
+function getWallet()  { return lsGet("game_wallet",     {v:1, stars:0, total:0}); }
+function getCloset()  { return lsGet("game_closet",     {v:1, owned:[], wearing:{}}); }
+function getColl()    { return lsGet("game_collection", {v:1, badges:[], cards:[]}); }
+function getSave(def) { return lsGet("game_save_" + GAME_ID, def || {}); }
+function putWallet(w) { lsSet("game_wallet", w); }
+function putCloset(c) { lsSet("game_closet", c); }
+function putColl(c)   { lsSet("game_collection", c); }
+function putSave(s)   { lsSet("game_save_" + GAME_ID, s); }
+
+/* 별 획득: stars와 total을 함께 올린다. total은 절대 줄지 않는다 */
+function addStars(n) {
+  var w = getWallet(); w.stars += n; w.total += n; putWallet(w);
+}
+/* 별 사용(상점): stars만 줄인다. 부족하면 false */
+function spendStars(n) {
+  var w = getWallet(); if (w.stars < n) return false;
+  w.stars -= n; putWallet(w); return true;
+}
+/* 뱃지·카드 획득(중복 방지) */
+function addBadge(n) { var c = getColl(); if (c.badges.indexOf(n) < 0) { c.badges.push(n); putColl(c); } }
+function addCard(n)  { var c = getColl(); if (c.cards.indexOf(n)  < 0) { c.cards.push(n);  putColl(c); } }
+
+/* ---------- 세이브 코드 (15자: 데이터 14 + 검사 1, 4자마다 하이픈) ----------
+   구성: stars(2) total(2) closet소유비트(3) badges비트(3) cards비트(2) 진행p1(1) 진행p2(1) */
+function enc2(n) { n = Math.max(0, Math.min(1023, Math.round(n||0))); return CS[Math.floor(n/32)] + CS[n%32]; }
+function dec2(s) { return CS.indexOf(s[0])*32 + CS.indexOf(s[1]); }
+function encBits(arr, chars) {
+  var bits = 0;
+  (arr||[]).forEach(function(x){ x = parseInt(x,10); if (x >= 1 && x <= chars*5) bits |= (1 << (x-1)); });
+  var out = "";
+  for (var i = chars-1; i >= 0; i--) out += CS[(bits >> (i*5)) & 31];
+  return out;
+}
+function decBits(s) {
+  var bits = 0, i;
+  for (i = 0; i < s.length; i++) bits = (bits << 5) | CS.indexOf(s[i]);
+  var arr = [];
+  for (i = 1; i <= s.length*5; i++) if (bits & (1 << (i-1))) arr.push(i);
+  return arr;
+}
+function makeCode(p1, p2) {
+  var w = getWallet(), c = getCloset(), k = getColl();
+  var raw = enc2(w.stars) + enc2(w.total) + encBits(c.owned,3) + encBits(k.badges,3) + encBits(k.cards,2) + CS[Math.max(0,Math.min(31,p1||0))] + CS[Math.max(0,Math.min(31,p2||0))];
+  var sum = 0; for (var i = 0; i < raw.length; i++) sum += CS.indexOf(raw[i]);
+  raw += CS[sum % 32];
+  return raw.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+function parseCode(str) {
+  var raw = (str||"").toUpperCase().replace(/[^A-Z2-9]/g, "");
+  if (raw.length !== 15) return null;
+  var sum = 0, i, x;
+  for (i = 0; i < 14; i++) { x = CS.indexOf(raw[i]); if (x < 0) return null; sum += x; }
+  if (CS[sum % 32] !== raw[14]) return null; /* 검사 글자 불일치 = 오타 */
+  return {
+    stars:  dec2(raw.slice(0,2)),
+    total:  dec2(raw.slice(2,4)),
+    owned:  decBits(raw.slice(4,7)),
+    badges: decBits(raw.slice(7,10)),
+    cards:  decBits(raw.slice(10,12)),
+    p1: CS.indexOf(raw[12]),
+    p2: CS.indexOf(raw[13])
+  };
+}
+/* 복원 적용: 재산이 지금보다 적으면 confirmFn(안내문)이 true일 때만 덮어씀 */
+function applyCode(str, confirmFn) {
+  var d = parseCode(str);
+  if (!d) return "bad";
+  var w = getWallet();
+  if (d.total < w.total || d.stars < w.stars) {
+    var msg = "입력한 코드의 재산(별 " + d.stars + "개)이 지금 기기(별 " + w.stars + "개)보다 적어요. 그래도 코드 쪽으로 되돌릴까요?";
+    if (!confirmFn(msg)) return "cancel";
+  }
+  putWallet({v:1, stars:d.stars, total:Math.max(d.total, w.total)});
+  var c = getCloset(); c.owned = d.owned; putCloset(c);
+  putColl({v:1, badges:d.badges, cards:d.cards});
+  return "ok";
+}
+
+/* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+function speak(txt) {
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(txt);
+    u.lang = "ko-KR"; u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/* ---------- 효과음(WebAudio, 외부 파일 없음) ---------- */
+var _ac = null;
+function _ctx() { if (!_ac) { try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return _ac; }
+function beep(freq, dur, type) {
+  var ac = _ctx(); if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (dur||0.15));
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + (dur||0.15));
+}
+function sfxGood()  { beep(660,0.12); setTimeout(function(){beep(880,0.12);},110); setTimeout(function(){beep(1320,0.2);},220); }
+function sfxHint()  { beep(440,0.15,"triangle"); }
+function sfxDone()  { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.18);}, i*140); }); }
+/* ============================================================
+   여기까지 공통 저장 라이브러리. 아래부터 게임 본체.
+   ============================================================ */
+
+/* ---------- 글자 데이터 (묶음별) ---------- */
+var SETS = {
+  basic: {name:"기본 (A B C S M)", items:[
+    {L:"A", emoji:"🍎", word:"apple",  ko:"애", koWord:"애플"},
+    {L:"B", emoji:"🍌", word:"banana", ko:"브", koWord:"버내너"},
+    {L:"C", emoji:"🐱", word:"cat",    ko:"크", koWord:"캣"},
+    {L:"S", emoji:"☀️", word:"sun",    ko:"스", koWord:"썬"},
+    {L:"M", emoji:"🌙", word:"moon",   ko:"므", koWord:"문"}
+  ]},
+  vowel: {name:"모음 (A E I O U)", items:[
+    {L:"A", emoji:"🍎", word:"apple",    ko:"애", koWord:"애플"},
+    {L:"E", emoji:"🐘", word:"elephant", ko:"에", koWord:"엘리펀트"},
+    {L:"I", emoji:"🧊", word:"igloo",    ko:"이", koWord:"이글루"},
+    {L:"O", emoji:"🐙", word:"octopus",  ko:"아", koWord:"악토퍼스"},
+    {L:"U", emoji:"☂️", word:"umbrella", ko:"어", koWord:"엄브렐러"}
+  ]},
+  tricky: {name:"헷갈리는 짝 (B V P F)", items:[
+    {L:"B", emoji:"🍌", word:"banana", ko:"브", koWord:"버내너"},
+    {L:"V", emoji:"🎻", word:"violin", ko:"브이", koWord:"바이올린"},
+    {L:"P", emoji:"🐷", word:"pig",    ko:"프", koWord:"피그"},
+    {L:"F", emoji:"🐠", word:"fish",   ko:"프", koWord:"피시"}
+  ]}
+};
+var STAGES = [
+  {emoji:"🥚", name:"알"},
+  {emoji:"🐤", name:"아기 앵무새"},
+  {emoji:"🦜", name:"무지개 앵무새"}
+];
+
+/* ---------- 저장 상태 ---------- */
+function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+var S = getSave({v:1, done:0, set:"basic", idx:0, recLen:5, goal:5, today:{date:"", stars:0}});
+if (!S.today || S.today.date !== todayStr()) S.today = {date: todayStr(), stars: 0};
+if (!SETS[S.set]) S.set = "basic";
+if (!S.recLen) S.recLen = 5;
+if (!S.goal) S.goal = 5;
+putSave(S);
+
+/* ---------- 판(글자) 상태 ---------- */
+var cur = null;              /* 현재 글자 객체 */
+var loop = null;             /* {listened, spoke, heardMine, heardOrig, starRec, starLoop} */
+var recordings = [];         /* {url, label} 최근 5개, 기기 안(메모리)에만 보관 */
+var mediaRec = null, recChunks = [], recBusy = false, micFailed = false;
+
+function $(id){ return document.getElementById(id); }
+function show(id){ $(id).classList.remove("hide"); }
+function hide(id){ $(id).classList.add("hide"); }
+
+function updateWallet(){ $("walletStars").textContent = getWallet().stars; }
+function stageOf(){ return Math.min(2, Math.floor((S.done||0)/3)); }
+function updateStage(){
+  var st = STAGES[stageOf()];
+  $("stageBox").textContent = st.emoji + " " + (stageOf()+1) + "단계";
+  $("parrot").textContent = st.emoji;
+}
+function updateGoalBar(){
+  var s = "";
+  for (var i=0;i<S.goal;i++) s += (i < S.today.stars) ? "⭐" : "☆";
+  $("goalBar").textContent = "오늘의 별 " + s;
+}
+function setMsg(t){ $("msg").textContent = t; }
+
+/* 별이 지갑으로 날아가는 연출 */
+function flyStar(fromEl){
+  try{
+    var to = $("walletBox");
+    var f = fromEl ? fromEl.getBoundingClientRect() : {left:innerWidth/2, top:innerHeight/2, width:0, height:0};
+    var t = to.getBoundingClientRect();
+    var el = document.createElement("div");
+    el.className = "flystar"; el.textContent = "⭐";
+    el.style.left = (f.left + f.width/2) + "px";
+    el.style.top  = (f.top + f.height/2) + "px";
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      el.style.transform = "translate(" + (t.left + t.width/2 - (f.left + f.width/2)) + "px,"
+        + (t.top + t.height/2 - (f.top + f.height/2)) + "px) scale(0.4)";
+      el.style.opacity = "0.2";
+    });});
+    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 900);
+  }catch(e){}
+}
+
+/* 별 획득(감소는 절대 없음) */
+function earnStars(n, fromEl){
+  addStars(n);
+  S.today.stars += n;
+  for (var i=0;i<n;i++) setTimeout(function(){ flyStar(fromEl); }, i*180);
+  sfxGood();
+  updateWallet(); updateGoalBar();
+  putSave(S); /* 판 진행마다 자동 저장 */
+  if (S.today.stars >= S.goal) { setTimeout(endDay, 1200); return true; }
+  return false;
+}
+
+/* ---------- 화면 전환 ---------- */
+function startGame(){
+  _ctx(); speak("");
+  if (S.today.stars >= S.goal) { endDay(); return; }
+  hide("scrStart"); show("scrGame"); hide("scrEnd");
+  nextLetter(false);
+}
+function endDay(){
+  hide("scrStart"); hide("scrGame"); show("scrEnd");
+  $("endParrot").textContent = STAGES[stageOf()].emoji;
+  var s=""; for (var i=0;i<S.today.stars;i++) s+="⭐";
+  $("endStars").textContent = s;
+  sfxDone();
+  speak("오늘은 여기까지! 정말 잘했어요. 내일 또 만나요!");
+  putSave(S);
+}
+
+/* ---------- 글자 진행 ---------- */
+function nextLetter(advance){
+  var items = SETS[S.set].items;
+  if (advance) S.idx = (S.idx + 1) % items.length;
+  if (S.idx >= items.length) S.idx = 0;
+  cur = items[S.idx];
+  loop = {listened:false, spoke:false, heardMine:false, heardOrig:false, starRec:false, starLoop:false};
+  $("bigLetter").textContent = cur.L;
+  $("bigEmoji").textContent = cur.emoji;
+  $("bigWord").textContent = cur.word;
+  hide("btnNext"); hide("btnFallbackDone");
+  $("parrot").className = "";
+  setMsg("먼저 [듣기]를 눌러 봐요!");
+  updateStage(); updateGoalBar(); updateWallet();
+  putSave(S);
+  speak(cur.L + ". " + cur.ko + ", " + cur.ko + ", " + cur.koWord + "!");
+}
+function ttsLetter(){
+  speak(cur.ko + ", " + cur.ko + ", " + cur.koWord + "! " + cur.L + "는 " + cur.koWord + "의 " + cur.ko + " 소리예요. 따라 해 볼까요?");
+}
+function checkLoopDone(){
+  if (loop.spoke && loop.listened && loop.heardMine && loop.heardOrig && !loop.starLoop){
+    loop.starLoop = true;
+    S.done = (S.done||0) + 1;
+    var oldStage = STAGES[Math.min(2, Math.floor((S.done-1)/3))];
+    updateStage();
+    var newStage = STAGES[stageOf()];
+    setMsg("한 글자 완성! 별 하나 더!");
+    var ended = earnStars(1, $("bigLetter"));
+    if (newStage.name !== oldStage.name){
+      setTimeout(function(){
+        setMsg("우와! 앵무새가 " + newStage.name + "(으)로 자랐어요! " + newStage.emoji);
+        speak("앵무새가 " + newStage.name + "로 자랐어요! 축하해요!");
+        $("parrot").className = "dance";
+        sfxDone();
+      }, 700);
+    }
+    if (!ended) show("btnNext");
+    putSave(S);
+  }
+}
+
+/* ---------- 녹음 (MediaRecorder, 실패해도 게임은 계속) ---------- */
+function pushRecording(url){
+  recordings.unshift({url:url, label:cur.L + " · " + new Date().toTimeString().slice(0,5)});
+  while (recordings.length > 5){
+    var old = recordings.pop();
+    try { URL.revokeObjectURL(old.url); } catch(e){}
+  }
+  renderRecList();
+}
+function renderRecList(){
+  var box = $("recList"); box.innerHTML = "";
+  if (!recordings.length){
+    box.innerHTML = '<span style="font-size:15px;color:#999">아직 녹음이 없어요.</span>';
+    return;
+  }
+  recordings.forEach(function(r, i){
+    var d = document.createElement("div"); d.className = "recItem";
+    var s = document.createElement("span"); s.textContent = "🎵 " + r.label;
+    var p = document.createElement("button"); p.className="b-purple"; p.textContent = "▶";
+    p.onclick = function(){ playUrl(r.url); };
+    var x = document.createElement("button"); x.className="b-gray"; x.textContent = "🗑";
+    x.onclick = function(){
+      try { URL.revokeObjectURL(r.url); } catch(e){}
+      recordings.splice(i,1); renderRecList();
+    };
+    d.appendChild(s); d.appendChild(p); d.appendChild(x);
+    box.appendChild(d);
+  });
+}
+function playUrl(url){
+  try { var a = new Audio(url); a.play(); } catch(e){}
+}
+function startRecording(){
+  if (recBusy) return;
+  try { speechSynthesis.cancel(); } catch(e){}
+  if (micFailed || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)){
+    micFallbackUI(); return;
+  }
+  recBusy = true;
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    recChunks = [];
+    try { mediaRec = new MediaRecorder(stream); }
+    catch(e){ recBusy=false; micFailed=true; stream.getTracks().forEach(function(t){t.stop();}); micFallbackUI(); return; }
+    mediaRec.ondataavailable = function(ev){ if (ev.data && ev.data.size) recChunks.push(ev.data); };
+    mediaRec.onstop = function(){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      hide("recState"); $("parrot").className = "";
+      recBusy = false;
+      try {
+        var blob = new Blob(recChunks, {type: mediaRec.mimeType || "audio/webm"});
+        pushRecording(URL.createObjectURL(blob));
+      } catch(e){}
+      recordDone();
+    };
+    show("recState");
+    $("parrot").className = "listen";
+    setMsg("앵무새가 듣고 있어요... " + cur.ko + "! 하고 말해 봐요!");
+    mediaRec.start();
+    setTimeout(function(){ try { if (mediaRec.state !== "inactive") mediaRec.stop(); } catch(e){} }, (S.recLen||5)*1000);
+  }).catch(function(){
+    recBusy = false; micFailed = true;
+    micFallbackUI();
+  });
+}
+function micFallbackUI(){
+  setMsg("마이크를 못 쓰지만 괜찮아요! 크게 말하고 아래 버튼을 눌러요!");
+  sfxHint();
+  speak(cur.ko + "! 하고 크게 말해 보고, 다 말했으면 버튼을 눌러요.");
+  show("btnFallbackDone");
+}
+function recordDone(){
+  loop.spoke = true;
+  hide("btnFallbackDone");
+  if (!loop.starRec){
+    loop.starRec = true;
+    setMsg("멋진 소리였어! ⭐");
+    speak("멋진 소리였어!");
+    earnStars(1, $("btnSpeak"));
+  } else {
+    setMsg("또 멋진 소리! 이제 비교해 볼까요?");
+  }
+  checkLoopDone();
+}
+
+/* ---------- 버튼 연결 ---------- */
+$("btnStart").onclick = startGame;
+$("btnListen").onclick = function(){
+  loop.listened = true;
+  $("parrot").className = "dance";
+  setTimeout(function(){ $("parrot").className = ""; }, 1500);
+  ttsLetter();
+  setMsg("잘 들었으면 [말하기]로 따라 해 봐요!");
+  checkLoopDone();
+};
+$("btnSpeak").onclick = startRecording;
+$("btnFallbackDone").onclick = recordDone;
+$("btnMine").onclick = function(){
+  if (!loop.spoke){ setMsg("먼저 [말하기]로 소리를 남겨 봐요!"); sfxHint(); return; }
+  loop.heardMine = true;
+  if (recordings.length){ setMsg("내 소리를 들어 봐요!"); playUrl(recordings[0].url); }
+  else { setMsg("녹음이 없으니 내 목소리로 한 번 더! " + cur.ko + "!"); speak("내 목소리로 한 번 더 말해 봐요!"); }
+  checkLoopDone();
+};
+$("btnOrig").onclick = function(){
+  loop.heardOrig = true;
+  ttsLetter();
+  setMsg("원래 소리예요. 내 소리랑 비교해 봐요!");
+  checkLoopDone();
+};
+$("btnNext").onclick = function(){ nextLetter(true); };
+
+/* ---------- 이어하기 코드 ---------- */
+function openModal(html){
+  var m = document.createElement("div");
+  m.className = "modal"; m.id = "dynModal";
+  var b = document.createElement("div"); b.className = "mbox";
+  b.innerHTML = html;
+  m.appendChild(b);
+  m.onclick = function(ev){ if (ev.target === m) closeModal(); };
+  document.body.appendChild(m);
+  return b;
+}
+function closeModal(){
+  var m = $("dynModal");
+  if (m && m.parentNode) m.parentNode.removeChild(m);
+}
+$("btnShowCode").onclick = function(){
+  var code = makeCode(Math.min(31, S.done||0), stageOf());
+  var b = openModal('<h2>🔑 이어하기 코드</h2><div id="codeOut"></div>' +
+    '<p style="font-size:16px;text-align:center">이 코드를 적어 두면 다른 기기에서<br>이어서 할 수 있어요.</p>' +
+    '<button class="big b-gray" id="mClose">닫기</button>');
+  b.querySelector("#codeOut").textContent = code;
+  b.querySelector("#mClose").onclick = closeModal;
+};
+$("btnEnterCode").onclick = function(){
+  var b = openModal('<h2>⌨️ 코드 입력</h2>' +
+    '<input id="codeIn" placeholder="예: AB2C-DEF3-..." autocomplete="off">' +
+    '<p id="codeMsg" style="font-size:16px;color:#C00;min-height:22px"></p>' +
+    '<button class="big b-green" id="mOk">복원하기</button>' +
+    '<button class="big b-gray" id="mClose">닫기</button>');
+  b.querySelector("#mClose").onclick = closeModal;
+  b.querySelector("#mOk").onclick = function(){
+    var str = b.querySelector("#codeIn").value;
+    var r = applyCode(str, function(msg){ return window.confirm(msg); });
+    if (r === "bad"){ b.querySelector("#codeMsg").textContent = "코드를 다시 확인해 주세요! (오타가 있어요)"; sfxHint(); return; }
+    if (r === "cancel"){ b.querySelector("#codeMsg").textContent = "복원을 취소했어요."; return; }
+    var d = parseCode(str);
+    if (d){ S.done = d.p1; S.idx = 0; putSave(S); }
+    updateWallet(); updateStage();
+    closeModal();
+    alert("복원 완료! 이어서 놀 수 있어요.");
+  };
+};
+
+/* ---------- 부모설정 (7+8 잠금) ---------- */
+$("gearBtn").onclick = function(){
+  var b = openModal('<h2>🔒 부모님 확인</h2>' +
+    '<p style="text-align:center;font-size:20px">7 + 8 = ?</p>' +
+    '<input id="gateIn" type="number" inputmode="numeric">' +
+    '<p id="gateMsg" style="color:#C00;font-size:16px;min-height:22px"></p>' +
+    '<button class="big b-green" id="gOk">확인</button>' +
+    '<button class="big b-gray" id="mClose">닫기</button>');
+  b.querySelector("#mClose").onclick = closeModal;
+  b.querySelector("#gOk").onclick = function(){
+    if (parseInt(b.querySelector("#gateIn").value, 10) === 15){ closeModal(); openSettings(); }
+    else { b.querySelector("#gateMsg").textContent = "다시 계산해 보세요!"; }
+  };
+};
+function openSettings(){
+  var opts = "";
+  Object.keys(SETS).forEach(function(k){
+    opts += '<option value="'+k+'"'+(S.set===k?" selected":"")+'>'+SETS[k].name+'</option>';
+  });
+  var b = openModal('<h2>⚙️ 부모설정</h2>' +
+    '<label>글자 묶음</label><select id="setSel">'+opts+'</select>' +
+    '<label>녹음 길이(초)</label><select id="lenSel">' +
+      [3,5,8,10].map(function(n){ return '<option value="'+n+'"'+(S.recLen===n?" selected":"")+'>'+n+'초</option>'; }).join("") +
+    '</select>' +
+    '<label>오늘 목표(별 개수)</label><select id="goalSel">' +
+      [3,5,7,10].map(function(n){ return '<option value="'+n+'"'+(S.goal===n?" selected":"")+'>'+n+'개</option>'; }).join("") +
+    '</select>' +
+    '<button class="big b-green" id="sOk">저장</button>' +
+    '<button class="big b-gray" id="mClose">닫기</button>');
+  b.querySelector("#mClose").onclick = closeModal;
+  b.querySelector("#sOk").onclick = function(){
+    var newSet = b.querySelector("#setSel").value;
+    if (newSet !== S.set){ S.set = newSet; S.idx = 0; }
+    S.recLen = parseInt(b.querySelector("#lenSel").value, 10) || 5;
+    S.goal = parseInt(b.querySelector("#goalSel").value, 10) || 5;
+    putSave(S);
+    closeModal();
+    updateGoalBar();
+    if (!$("scrGame").classList.contains("hide")) nextLetter(false);
+    if (S.today.stars < S.goal && !$("scrEnd").classList.contains("hide")){
+      hide("scrEnd"); show("scrGame"); nextLetter(false);
+    }
+  };
+}
+
+/* ---------- 초기 표시 ---------- */
+updateWallet(); updateStage(); updateGoalBar();
+</script>
+</body>
+</html>
