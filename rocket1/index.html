@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>우주선 덧셈 발사</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:linear-gradient(#dfe7ff,#fff2e0);display:flex;justify-content:center;
+  -webkit-user-select:none;user-select:none}
+#app{width:100%;max-width:480px;min-width:320px;display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px}
+#walletBox{background:#fff;border-radius:999px;padding:8px 16px;font-size:20px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+#stageBox{background:#fff;border-radius:999px;padding:8px 14px;font-size:16px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.hspace{flex:1}
+.hbtn{border:none;background:#fff;border-radius:14px;padding:10px 14px;font-size:17px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12);cursor:pointer;font-family:inherit}
+#btnGear{font-size:15px;padding:8px 10px;opacity:.75}
+main{flex:1;display:flex;flex-direction:column}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+.big{min-height:64px;font-size:24px;font-weight:800;border:none;border-radius:18px;
+  color:#fff;background:linear-gradient(135deg,#7b5cff,#4b34c9);
+  box-shadow:0 4px 0 #33228f;width:100%;margin-top:14px}
+.big.alt{background:linear-gradient(135deg,#ff8fb2,#f2547d);box-shadow:0 4px 0 #b23255;
+  font-size:19px;min-height:64px}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+/* 시작 화면 */
+#scrStart{padding:20px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrStart h1{font-size:30px;color:#33228f;margin-bottom:6px}
+#scrStart .sub{font-size:16px;color:#5a4bb0;margin-bottom:10px}
+#startShip{font-size:60px;animation:bob 2s infinite ease-in-out}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+/* 게임 화면 */
+#scrGame{padding:0 12px 12px;display:flex;flex-direction:column;flex:1}
+#goalBar{text-align:center;font-size:14px;color:#5a4bb0;padding:4px}
+#probCard{background:#fff;border:3px solid #b9a8ff;border-radius:20px;padding:18px 12px;
+  text-align:center;position:relative}
+#probText{font-size:44px;font-weight:800;color:#33228f;letter-spacing:2px}
+#btnSpeak{position:absolute;right:10px;top:10px;border:none;background:#efe9ff;
+  border-radius:50%;width:52px;height:52px;font-size:24px}
+#probMsg{font-size:17px;font-weight:700;color:#5a4bb0;min-height:26px;margin-top:6px}
+#answers{display:flex;gap:10px;margin-top:14px}
+.ans{flex:1;min-height:76px;font-size:32px;font-weight:800;border:none;border-radius:18px;
+  background:#fff;color:#33228f;border:3px solid #b9a8ff;box-shadow:0 4px 0 #cfc4ff}
+.ans:active{transform:translateY(3px);box-shadow:none}
+.ans.gone{visibility:hidden}
+.ans.guide{animation:blink .5s infinite;border-color:#ffb703;background:#fff6da}
+.ans.nope{animation:shake .4s;background:#ffe9ee}
+@keyframes blink{0%,100%{box-shadow:0 0 0 0 rgba(255,183,3,.8)}50%{box-shadow:0 0 0 12px rgba(255,183,3,0)}}
+/* 우주선·연료 */
+#shipArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  min-height:150px;position:relative;overflow:hidden}
+#ship{font-size:70px;transition:transform .4s}
+#ship.happy{animation:pop .5s}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.2)}100%{transform:scale(1)}}
+#fuelRow{display:flex;align-items:center;gap:8px;margin:10px 0 4px;justify-content:center;width:100%}
+#fuelLabel{font-size:16px;font-weight:700;color:#5a4bb0}
+#fuelCells{display:flex;gap:5px}
+.fcell{width:30px;height:38px;border-radius:8px;border:2px solid #b9a8ff;background:#fff}
+.fcell.on{background:linear-gradient(#ffd166,#f77f00);border-color:#f77f00}
+/* 발사 오버레이 */
+#launchOvl{position:fixed;inset:0;background:linear-gradient(#0b1035,#2a2f6e);z-index:45;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;overflow:hidden}
+#count{font-size:90px;font-weight:800}
+#launchShip{font-size:90px;margin-top:16px;transition:transform 1.6s ease-in}
+#launchShip.fly{transform:translateY(-130vh)}
+#launchMsg{font-size:24px;font-weight:700;margin-top:14px;text-align:center;line-height:1.5}
+.starbg{position:absolute;color:#fff;opacity:.7;pointer-events:none}
+/* 끝 화면 */
+#scrEnd{padding:30px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrEnd h2{font-size:28px;color:#33228f;margin:10px 0}
+#endStats{font-size:19px;color:#5a4bb0;margin:8px 0;line-height:1.7}
+/* 모달 */
+#ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;
+  justify-content:center;z-index:50;padding:16px}
+.mbox{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px;
+  max-height:85vh;overflow:auto}
+.mbox h3{font-size:20px;margin-bottom:12px;color:#33228f}
+.mbox label{display:block;font-size:15px;font-weight:700;margin:12px 0 4px;color:#444}
+.mbox input,.mbox select{width:100%;font-size:20px;padding:12px;border:2px solid #bbb;
+  border-radius:12px;font-family:inherit}
+.codeShow{font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;
+  background:#f3f0ff;border:2px dashed #7b5cff;border-radius:12px;padding:16px 6px;margin:8px 0;
+  -webkit-user-select:text;user-select:text}
+.mrow{display:flex;gap:10px;margin-top:16px}
+.mrow button{flex:1;min-height:56px;font-size:18px;font-weight:700;border:none;border-radius:14px}
+.mok{background:#7b5cff;color:#fff}
+.mcancel{background:#e5e5e5;color:#333}
+.gateMsg{color:#d33;font-size:14px;min-height:20px;margin-top:6px}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.flystar{position:fixed;font-size:30px;z-index:99;transition:transform .8s ease-in,opacity .8s;
+  pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div id="walletBox">⭐ <span id="walletStars">0</span></div>
+  <div id="stageBox">🚀 <span id="stageName">1단계</span></div>
+  <div class="hspace"></div>
+  <button id="btnGear" class="hbtn">⚙️</button>
+</header>
+<main>
+  <section id="scrStart">
+    <div id="startShip">🚀</div>
+    <h1>우주선 덧셈 발사</h1>
+    <div class="sub">덧셈으로 연료를 채워 우주로 발사!</div>
+    <button id="btnStart" class="big">▶ 시작</button>
+    <button id="btnShowCode" class="big alt">🔑 이어하기 코드 보기</button>
+    <button id="btnEnterCode" class="big alt">⌨️ 코드 입력</button>
+  </section>
+
+  <section id="scrGame" class="hidden">
+    <div id="goalBar"></div>
+    <div id="probCard">
+      <button id="btnSpeak">🔊</button>
+      <div id="probText">? + ? = ?</div>
+      <div id="probMsg">맞는 답을 골라 보세요!</div>
+    </div>
+    <div id="answers">
+      <button class="ans" id="ans0"></button>
+      <button class="ans" id="ans1"></button>
+      <button class="ans" id="ans2"></button>
+    </div>
+    <div id="shipArea">
+      <div id="ship">🥚</div>
+      <div id="fuelRow">
+        <span id="fuelLabel">연료</span>
+        <span id="fuelCells"></span>
+        <span id="fuelText">0/5</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="scrEnd" class="hidden">
+    <div style="font-size:60px">🌙</div>
+    <h2>오늘은 여기까지!<br>내일 또 만나!</h2>
+    <div id="endStats"></div>
+    <button id="btnEndCode" class="big alt">🔑 이어하기 코드 보기</button>
+  </section>
+</main>
+</div>
+
+<div id="launchOvl" class="hidden">
+  <div id="count">5</div>
+  <div id="launchShip">🚀</div>
+  <div id="launchMsg">발사 준비!</div>
+</div>
+
+<div id="ovl" class="hidden">
+  <div class="mbox hidden" id="mCode">
+    <h3>🔑 이어하기 코드</h3>
+    <div>다른 기기에서 이 코드를 입력하면<br>별과 진행을 옮길 수 있어요.</div>
+    <div class="codeShow" id="codeText"></div>
+    <div class="mrow"><button class="mcancel" id="btnCodeClose">닫기</button></div>
+  </div>
+  <div class="mbox hidden" id="mInput">
+    <h3>⌨️ 코드 입력</h3>
+    <label for="codeIn">이어하기 코드를 넣어 주세요</label>
+    <input id="codeIn" placeholder="예: AB2C-DE3F-GH4J-KL5" autocomplete="off">
+    <div class="gateMsg" id="codeMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnCodeCancel">취소</button>
+      <button class="mok" id="btnCodeOk">복원하기</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mGate">
+    <h3>👨‍👩‍👧 부모님 확인</h3>
+    <label for="gateIn">7 + 8 = ?</label>
+    <input id="gateIn" type="number" inputmode="numeric" autocomplete="off">
+    <div class="gateMsg" id="gateMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnGateCancel">취소</button>
+      <button class="mok" id="btnGateOk">확인</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mSet">
+    <h3>⚙️ 부모 설정</h3>
+    <label for="setLevel">난이도 단계</label>
+    <select id="setLevel">
+      <option value="1">1단계: 한 자리 + 한 자리 (작은 수)</option>
+      <option value="2">2단계: 한 자리 + 한 자리 (합 10까지)</option>
+      <option value="3">3단계: 두 자리 + 한 자리 (받아올림 없음)</option>
+      <option value="4">4단계: 두 자리 + 두 자리 (받아올림 없음)</option>
+    </select>
+    <label for="setFuel">연료 칸 수 (3~8)</label>
+    <input id="setFuel" type="number" inputmode="numeric" min="3" max="8">
+    <label for="setGoal">오늘 목표 (별 개수)</label>
+    <input id="setGoal" type="number" inputmode="numeric" min="1" max="31">
+    <div class="mrow">
+      <button class="mcancel" id="btnSetCancel">취소</button>
+      <button class="mok" id="btnSetOk">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   공통 저장 라이브러리 v1 — 부록 A 공통 저장 규격 v2 구현
+   모든 게임에 이 블록을 그대로 script 태그 안에 붙여 넣는다.
+   게임별로 바꾸는 것은 GAME_ID 한 줄뿐이다.
+   ============================================================ */
+var GAME_ID = "rocket1"; // 게임마다 이 줄만 변경
+
+/* 세이브 코드 문자셋: 영문 대문자+숫자 32자, O·0·I·1 제외 */
+var CS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* ---------- localStorage 안전 입출력 ---------- */
+function lsGet(k, def) {
+  try {
+    var v = JSON.parse(localStorage.getItem(k));
+    return (v && typeof v === "object") ? v : JSON.parse(JSON.stringify(def));
+  } catch (e) { return JSON.parse(JSON.stringify(def)); }
+}
+function lsSet(k, obj) {
+  try { localStorage.setItem(k, JSON.stringify(obj)); } catch (e) { /* 저장 실패해도 게임은 계속 */ }
+}
+
+/* ---------- 공용 4키 (있는 키는 절대 지우지 않고 읽어서 이어 씀) ---------- */
+function getWallet()  { return lsGet("game_wallet",     {v:1, stars:0, total:0}); }
+function getCloset()  { return lsGet("game_closet",     {v:1, owned:[], wearing:{}}); }
+function getColl()    { return lsGet("game_collection", {v:1, badges:[], cards:[]}); }
+function getSave(def) { return lsGet("game_save_" + GAME_ID, def || {}); }
+function putWallet(w) { lsSet("game_wallet", w); }
+function putCloset(c) { lsSet("game_closet", c); }
+function putColl(c)   { lsSet("game_collection", c); }
+function putSave(s)   { lsSet("game_save_" + GAME_ID, s); }
+
+/* 별 획득: stars와 total을 함께 올린다. total은 절대 줄지 않는다 */
+function addStars(n) {
+  var w = getWallet(); w.stars += n; w.total += n; putWallet(w);
+}
+/* 별 사용(상점): stars만 줄인다. 부족하면 false */
+function spendStars(n) {
+  var w = getWallet(); if (w.stars < n) return false;
+  w.stars -= n; putWallet(w); return true;
+}
+/* 뱃지·카드 획득(중복 방지) */
+function addBadge(n) { var c = getColl(); if (c.badges.indexOf(n) < 0) { c.badges.push(n); putColl(c); } }
+function addCard(n)  { var c = getColl(); if (c.cards.indexOf(n)  < 0) { c.cards.push(n);  putColl(c); } }
+
+/* ---------- 세이브 코드 (15자: 데이터 14 + 검사 1, 4자마다 하이픈) ----------
+   구성: stars(2) total(2) closet소유비트(3) badges비트(3) cards비트(2) 진행p1(1) 진행p2(1)
+   숫자 2자 = 0~1023, 비트 3자 = 항목 1~15번, 비트 2자 = 항목 1~10번, 1자 = 0~31 */
+function enc2(n) { n = Math.max(0, Math.min(1023, Math.round(n||0))); return CS[Math.floor(n/32)] + CS[n%32]; }
+function dec2(s) { return CS.indexOf(s[0])*32 + CS.indexOf(s[1]); }
+function encBits(arr, chars) { /* 번호 배열 -> chars글자 비트마스크 */
+  var bits = 0;
+  (arr||[]).forEach(function(x){ x = parseInt(x,10); if (x >= 1 && x <= chars*5) bits |= (1 << (x-1)); });
+  var out = "";
+  for (var i = chars-1; i >= 0; i--) out += CS[(bits >> (i*5)) & 31];
+  return out;
+}
+function decBits(s) { /* 글자들 -> 번호 배열 */
+  var bits = 0, i;
+  for (i = 0; i < s.length; i++) bits = (bits << 5) | CS.indexOf(s[i]);
+  var arr = [];
+  for (i = 1; i <= s.length*5; i++) if (bits & (1 << (i-1))) arr.push(i);
+  return arr;
+}
+function makeCode(p1, p2) {
+  var w = getWallet(), c = getCloset(), k = getColl();
+  var raw = enc2(w.stars) + enc2(w.total) + encBits(c.owned,3) + encBits(k.badges,3) + encBits(k.cards,2) + CS[Math.max(0,Math.min(31,p1||0))] + CS[Math.max(0,Math.min(31,p2||0))];
+  var sum = 0; for (var i = 0; i < raw.length; i++) sum += CS.indexOf(raw[i]);
+  raw += CS[sum % 32];
+  return raw.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+function parseCode(str) {
+  var raw = (str||"").toUpperCase().replace(/[^A-Z2-9]/g, "");
+  if (raw.length !== 15) return null;
+  var sum = 0, i, x;
+  for (i = 0; i < 14; i++) { x = CS.indexOf(raw[i]); if (x < 0) return null; sum += x; }
+  if (CS[sum % 32] !== raw[14]) return null; /* 검사 글자 불일치 = 오타 */
+  return {
+    stars:  dec2(raw.slice(0,2)),
+    total:  dec2(raw.slice(2,4)),
+    owned:  decBits(raw.slice(4,7)),
+    badges: decBits(raw.slice(7,10)),
+    cards:  decBits(raw.slice(10,12)),
+    p1: CS.indexOf(raw[12]),
+    p2: CS.indexOf(raw[13])
+  };
+}
+/* 복원 적용: 재산이 지금보다 적으면 confirmFn(안내문)이 true일 때만 덮어씀.
+   total은 어떤 경우에도 큰 값을 유지한다. 반환: "ok" | "cancel" | "bad" */
+function applyCode(str, confirmFn) {
+  var d = parseCode(str);
+  if (!d) return "bad";
+  var w = getWallet();
+  if (d.total < w.total || d.stars < w.stars) {
+    var msg = "입력한 코드의 재산(별 " + d.stars + "개)이 지금 기기(별 " + w.stars + "개)보다 적어요. 그래도 코드 쪽으로 되돌릴까요?";
+    if (!confirmFn(msg)) return "cancel";
+  }
+  putWallet({v:1, stars:d.stars, total:Math.max(d.total, w.total)});
+  var c = getCloset(); c.owned = d.owned; putCloset(c);
+  putColl({v:1, badges:d.badges, cards:d.cards});
+  return "ok";
+}
+
+/* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+function speak(txt) {
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(txt);
+    u.lang = "ko-KR"; u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/* ---------- 효과음(WebAudio, 외부 파일 없음) ---------- */
+var _ac = null;
+function _ctx() { if (!_ac) { try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return _ac; }
+function beep(freq, dur, type) {
+  var ac = _ctx(); if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (dur||0.15));
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + (dur||0.15));
+}
+function sfxGood()  { beep(660,0.12); setTimeout(function(){beep(880,0.12);},110); setTimeout(function(){beep(1320,0.2);},220); }
+function sfxHint()  { beep(440,0.15,"triangle"); }
+function sfxDone()  { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.18);}, i*140); }); }
+/* ============================================================ */
+
+/* ==================== 게임 본체: 우주선 덧셈 발사 ====================
+   저장 키: game_wallet · game_closet · game_collection · game_save_rocket1 */
+var STAGES = [
+  {e:"🥚", name:"알"},
+  {e:"🚀", name:"꼬마 로켓"},
+  {e:"🛸", name:"멋진 로켓"}
+];
+
+var SV = getSave({v:1, day:"", todayStars:0, launches:0, fuel:0,
+  cfg:{level:1, fuelMax:5, goal:5}});
+if (!SV.cfg) SV.cfg = {level:1, fuelMax:5, goal:5};
+if (!SV.cfg.level) SV.cfg.level = 1;
+if (!SV.cfg.fuelMax) SV.cfg.fuelMax = 5;
+if (!SV.cfg.goal) SV.cfg.goal = 5;
+if (!SV.fuel) SV.fuel = 0;
+if (!SV.launches) SV.launches = 0;
+
+function $(id){ return document.getElementById(id); }
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function rnd(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function ensureDay(){ if (SV.day !== todayStr()) { SV.day = todayStr(); SV.todayStars = 0; putSave(SV); } }
+
+var SCREENS = ["scrStart","scrGame","scrEnd"];
+function showScreen(id){ SCREENS.forEach(function(s){ if(s===id) show($(s)); else hide($(s)); }); }
+var MODALS = ["mCode","mInput","mGate","mSet"];
+function openModal(id){ show($("ovl")); MODALS.forEach(function(m){ if(m===id) show($(m)); else hide($(m)); }); }
+function closeModal(){ hide($("ovl")); }
+
+function refreshWallet(){ $("walletStars").textContent = getWallet().stars; }
+function flyStar(fromEl, delay){
+  var src = fromEl || $("probCard");
+  var r1 = src.getBoundingClientRect(), r2 = $("walletBox").getBoundingClientRect();
+  var s = document.createElement("div");
+  s.className = "flystar"; s.textContent = "⭐";
+  var x0 = r1.left + r1.width/2 - 15, y0 = r1.top + r1.height/2 - 15;
+  s.style.left = x0 + "px"; s.style.top = y0 + "px";
+  document.body.appendChild(s);
+  setTimeout(function(){
+    s.style.transform = "translate(" + (r2.left + r2.width/2 - 15 - x0) + "px," +
+      (r2.top + r2.height/2 - 15 - y0) + "px) scale(.4)";
+    s.style.opacity = "0.3";
+  }, 40 + (delay||0));
+  setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); refreshWallet(); }, 900 + (delay||0));
+}
+function awardStars(n, el){
+  if (n <= 0) return;
+  addStars(n);
+  for (var i=0;i<n;i++) flyStar(el, i*220);
+}
+
+/* ---------- 진화 단계 ---------- */
+function stageOf(launches){ return launches >= 6 ? 3 : launches >= 3 ? 2 : 1; }
+function refreshStage(){
+  var st = stageOf(SV.launches);
+  $("stageName").textContent = st + "단계 " + STAGES[st-1].name;
+  $("ship").textContent = STAGES[st-1].e;
+  $("startShip").textContent = STAGES[st-1].e;
+}
+
+/* ---------- 문제 생성 (같은 문제 반복 금지) ---------- */
+var asked = {}, prob = null, attempt = 0, guided = false, busy = false;
+
+function gen(){
+  var lv = SV.cfg.level, a, b, key, tries = 0;
+  while (true) {
+    if (lv === 1) { a = rnd(1, 5); b = rnd(1, 5); } /* 합 10 이하 작은 수 */
+    else if (lv === 2) { a = rnd(1, 9); b = rnd(1, 10 - a); }
+    else if (lv === 3) { a = rnd(10, 89); b = rnd(1, 9); if (a % 10 + b > 9) { tries++; if (tries < 200) continue; } }
+    else { a = rnd(10, 88); b = rnd(11, 88);
+      if (a % 10 + b % 10 > 9 || Math.floor(a/10) + Math.floor(b/10) > 9) { tries++; if (tries < 200) continue; } }
+    key = a + "+" + b;
+    tries++;
+    if (!asked[key] || tries > 250) break;
+  }
+  if (Object.keys(asked).length > 40) asked = {};
+  asked[key] = 1;
+  return {a:a, b:b, c:a+b};
+}
+
+function makeChoices(p){
+  var cands = [p.c + 1, p.c - 1, p.c + 10, p.c - 10, p.c + 2, p.c - 2];
+  if (p.c >= 10) {
+    var sw = parseInt(String(p.c).split("").reverse().join(""), 10);
+    if (sw !== p.c) cands.push(sw);
+  }
+  shuffle(cands);
+  var out = [p.c];
+  cands.forEach(function(x){
+    if (out.length >= 3) return;
+    if (x > 0 && out.indexOf(x) < 0) out.push(x);
+  });
+  while (out.length < 3) out.push(p.c + out.length + 2);
+  return shuffle(out);
+}
+
+function speakProb(){
+  if (!prob) return;
+  speak(prob.a + " 더하기 " + prob.b + "는 얼마일까요?");
+}
+
+function goalText(){ return "오늘 별 " + SV.todayStars + " / 목표 " + SV.cfg.goal + "개 · 발사 " + SV.launches + "회"; }
+
+function nextProblem(){
+  prob = gen();
+  attempt = 0; guided = false; busy = false;
+  $("probText").textContent = prob.a + " + " + prob.b + " = ?";
+  $("probMsg").textContent = "맞는 답을 골라 보세요!";
+  $("goalBar").textContent = goalText();
+  var ch = makeChoices(prob);
+  for (var i = 0; i < 3; i++) {
+    var btn = $("ans" + i);
+    btn.textContent = ch[i];
+    btn.className = "ans";
+    btn.disabled = false;
+  }
+  updateFuel();
+  speakProb();
+}
+
+function updateFuel(){
+  var box = $("fuelCells"); box.innerHTML = "";
+  for (var i = 0; i < SV.cfg.fuelMax; i++) {
+    var c = document.createElement("span");
+    c.className = "fcell" + (i < SV.fuel ? " on" : "");
+    box.appendChild(c);
+  }
+  $("fuelText").textContent = SV.fuel + "/" + SV.cfg.fuelMax;
+}
+
+function tapAnswer(i){
+  if (busy || !prob) return;
+  var btn = $("ans" + i);
+  if (btn.classList.contains("gone") || btn.disabled) return;
+  var val = parseInt(btn.textContent, 10);
+  if (guided && val !== prob.c) return; /* 따라 누르기 단계에서는 정답만 */
+  if (val === prob.c) {
+    busy = true;
+    var stars = guided ? 0 : (attempt === 0 ? 2 : 1);
+    $("probText").textContent = prob.a + " + " + prob.b + " = " + prob.c;
+    $("probMsg").textContent = guided ? "따라 눌렀어요! 연료 +1!" :
+      (stars === 2 ? "정답! 별 2개 + 연료 1칸!" : "정답! 별 1개 + 연료 1칸!");
+    sfxGood();
+    speak(prob.a + " 더하기 " + prob.b + "는 " + prob.c + "! 정답이에요!");
+    $("ship").classList.add("happy");
+    setTimeout(function(){ $("ship").classList.remove("happy"); }, 550);
+    if (stars > 0) { awardStars(stars, $("probCard")); SV.todayStars += stars; }
+    SV.fuel++; /* 연료는 절대 줄지 않는다 */
+    putSave(SV); /* 판이 끝날 때마다 자동 저장 */
+    updateFuel();
+    $("goalBar").textContent = goalText();
+    if (SV.fuel >= SV.cfg.fuelMax) setTimeout(launch, 1000);
+    else setTimeout(nextProblem, 1500);
+  } else {
+    attempt++;
+    sfxHint();
+    btn.classList.add("nope");
+    setTimeout(function(){ btn.classList.remove("nope"); }, 450);
+    if (attempt === 1) {
+      $("probMsg").textContent = "괜찮아요! 다시 한번!";
+      speak("괜찮아요, 다시 한번 생각해 봐요");
+    } else if (attempt === 2) {
+      /* 힌트: 오답 하나 제거 */
+      for (var k = 0; k < 3; k++) {
+        var o = $("ans" + k);
+        if (!o.classList.contains("gone") && parseInt(o.textContent, 10) !== prob.c && o !== btn) {
+          o.classList.add("gone"); break;
+        }
+      }
+      $("probMsg").textContent = "힌트! 보기 하나를 치웠어요!";
+      speak("힌트! 보기 하나를 치웠어요. 다시 골라 봐요");
+    } else {
+      /* 세 번째: 정답을 보여주고 따라 누르게 */
+      guided = true;
+      for (var m = 0; m < 3; m++) {
+        var g = $("ans" + m);
+        if (parseInt(g.textContent, 10) === prob.c) g.classList.add("guide");
+        else g.disabled = true;
+      }
+      $("probMsg").textContent = "정답은 " + prob.c + "! 반짝이는 버튼을 눌러 봐요!";
+      speak("정답은 " + prob.c + "이에요. 반짝이는 버튼을 따라 눌러 봐요");
+    }
+  }
+}
+
+/* ---------- 발사·진화 ---------- */
+function launch(){
+  var ovl = $("launchOvl");
+  /* 별 배경 */
+  Array.prototype.forEach.call(ovl.querySelectorAll(".starbg"), function(s){ s.parentNode.removeChild(s); });
+  for (var i = 0; i < 18; i++) {
+    var st = document.createElement("div");
+    st.className = "starbg"; st.textContent = "✦";
+    st.style.left = Math.random()*95 + "%";
+    st.style.top = Math.random()*95 + "%";
+    st.style.fontSize = (8 + Math.random()*14) + "px";
+    ovl.appendChild(st);
+  }
+  var stBefore = stageOf(SV.launches);
+  $("launchShip").textContent = STAGES[stBefore-1].e;
+  $("launchShip").classList.remove("fly");
+  $("launchMsg").textContent = "발사 준비!";
+  show(ovl);
+  speak("발사 준비! 다 같이 세어 봐요!");
+  var n = 5;
+  $("count").textContent = n;
+  var timer = setInterval(function(){
+    n--;
+    if (n >= 1) {
+      $("count").textContent = n;
+      beep(520 + n*40, 0.12);
+      speak(String(n));
+    } else {
+      clearInterval(timer);
+      $("count").textContent = "발사!";
+      speak("발사!");
+      sfxDone();
+      $("launchShip").classList.add("fly");
+      setTimeout(afterLaunch, 1800);
+    }
+  }, 750);
+}
+
+function afterLaunch(){
+  var stBefore = stageOf(SV.launches);
+  SV.launches++;
+  SV.fuel = 0;
+  var stAfter = stageOf(SV.launches);
+  putSave(SV); /* 판(발사)이 끝날 때마다 자동 저장 */
+  if (stAfter > stBefore) {
+    $("launchShip").classList.remove("fly");
+    $("launchShip").textContent = STAGES[stAfter-1].e;
+    $("count").textContent = "🎉";
+    $("launchMsg").textContent = "우주선이 진화했어요!\n" + STAGES[stAfter-1].name + " 탄생!";
+    sfxDone();
+    speak("대단해요! 우주선이 " + STAGES[stAfter-1].name + "로 진화했어요!");
+    setTimeout(finishLaunch, 2600);
+  } else {
+    finishLaunch();
+  }
+}
+
+function finishLaunch(){
+  hide($("launchOvl"));
+  refreshStage();
+  if (SV.todayStars >= SV.cfg.goal) showEnd();
+  else nextProblem();
+}
+
+function showEnd(){
+  showScreen("scrEnd");
+  var st = stageOf(SV.launches);
+  $("endStats").innerHTML = "오늘 모은 별: ⭐ " + SV.todayStars + "개<br>지갑의 별: ⭐ " +
+    getWallet().stars + "개<br>발사 " + SV.launches + "회 · " + STAGES[st-1].e + " " + STAGES[st-1].name;
+  sfxDone();
+  speak("오늘은 여기까지! 내일 또 만나!");
+}
+
+/* ---------- 버튼 연결 ---------- */
+$("ans0").addEventListener("click", function(){ tapAnswer(0); });
+$("ans1").addEventListener("click", function(){ tapAnswer(1); });
+$("ans2").addEventListener("click", function(){ tapAnswer(2); });
+$("btnSpeak").addEventListener("click", speakProb);
+
+$("btnStart").addEventListener("click", function(){
+  var ac = _ctx(); if (ac && ac.state === "suspended") { try { ac.resume(); } catch(e){} }
+  ensureDay();
+  refreshStage();
+  if (SV.todayStars >= SV.cfg.goal) { showEnd(); return; }
+  showScreen("scrGame");
+  nextProblem();
+});
+
+function showCodeModal(){
+  $("codeText").textContent = makeCode(Math.min(31, SV.launches), stageOf(SV.launches));
+  openModal("mCode");
+}
+$("btnShowCode").addEventListener("click", showCodeModal);
+$("btnEndCode").addEventListener("click", showCodeModal);
+$("btnCodeClose").addEventListener("click", closeModal);
+$("btnEnterCode").addEventListener("click", function(){
+  $("codeIn").value = ""; $("codeMsg").textContent = "";
+  openModal("mInput");
+});
+$("btnCodeCancel").addEventListener("click", closeModal);
+$("btnCodeOk").addEventListener("click", function(){
+  var r = applyCode($("codeIn").value, function(m){ return window.confirm(m); });
+  if (r === "ok") {
+    var d = parseCode($("codeIn").value);
+    if (d && d.p1 > SV.launches) { SV.launches = d.p1; putSave(SV); } /* 진행은 큰 쪽 유지 */
+    refreshWallet(); refreshStage(); closeModal();
+    speak("코드를 복원했어요!");
+    alert("복원 완료! 별과 진행을 불러왔어요.");
+  } else if (r === "cancel") {
+    closeModal();
+  } else {
+    $("codeMsg").textContent = "코드가 맞지 않아요. 다시 확인해 주세요.";
+    $("codeIn").classList.add("shake");
+    setTimeout(function(){ $("codeIn").classList.remove("shake"); }, 500);
+  }
+});
+
+/* ---------- 부모설정 (7+8 잠금) ---------- */
+$("btnGear").addEventListener("click", function(){
+  $("gateIn").value = ""; $("gateMsg").textContent = "";
+  openModal("mGate");
+});
+$("btnGateCancel").addEventListener("click", closeModal);
+$("btnGateOk").addEventListener("click", function(){
+  if (parseInt($("gateIn").value, 10) === 15) {
+    $("setLevel").value = String(SV.cfg.level);
+    $("setFuel").value = String(SV.cfg.fuelMax);
+    $("setGoal").value = String(SV.cfg.goal);
+    openModal("mSet");
+  } else {
+    $("gateMsg").textContent = "다시 생각해 보세요!";
+    $("gateIn").classList.add("shake");
+    setTimeout(function(){ $("gateIn").classList.remove("shake"); }, 500);
+  }
+});
+$("btnSetCancel").addEventListener("click", closeModal);
+$("btnSetOk").addEventListener("click", function(){
+  var lv = parseInt($("setLevel").value, 10);
+  SV.cfg.level = (lv >= 1 && lv <= 4) ? lv : 1;
+  var fm = parseInt($("setFuel").value, 10);
+  SV.cfg.fuelMax = (fm >= 3 && fm <= 8) ? fm : 5;
+  var g = parseInt($("setGoal").value, 10);
+  SV.cfg.goal = (g >= 1 && g <= 31) ? g : 5;
+  asked = {}; /* 난이도가 바뀌면 문제 기록 초기화 */
+  putSave(SV);
+  closeModal();
+  if (!$("scrGame").classList.contains("hidden")) nextProblem();
+  if (!$("scrEnd").classList.contains("hidden") && SV.todayStars < SV.cfg.goal) showScreen("scrStart");
+});
+
+/* ---------- 초기화 ---------- */
+ensureDay();
+refreshWallet();
+refreshStage();
+showScreen("scrStart");
+</script>
+</body>
+</html>
