@@ -302,11 +302,29 @@ function applyCode(str, confirmFn) {
 }
 
 /* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+var _voice = null;
+function _pickVoice() {
+  try {
+    var all = speechSynthesis.getVoices() || [];
+    var ko = all.filter(function(v){ return (v.lang||"").replace("_","-").toLowerCase().indexOf("ko") === 0; });
+    if (!ko.length) { _voice = null; return; }
+    var pref = ["Google 한국어","Google","SunHi","선히","Yuna","유나","InJoon","인준","Heami","해미"];
+    for (var i = 0; i < pref.length; i++) {
+      for (var j = 0; j < ko.length; j++) {
+        if ((ko[j].name||"").indexOf(pref[i]) >= 0) { _voice = ko[j]; return; }
+      }
+    }
+    _voice = ko[0];
+  } catch (e) { _voice = null; }
+}
+try { if (window.speechSynthesis) { _pickVoice(); speechSynthesis.onvoiceschanged = _pickVoice; } } catch (e) {}
 function speak(txt) {
   try {
     if (!window.speechSynthesis) return;
+    if (!_voice) _pickVoice();
     var u = new SpeechSynthesisUtterance(txt);
-    u.lang = "ko-KR"; u.rate = 0.9;
+    u.lang = "ko-KR"; u.rate = 1.0; u.pitch = 1.03;
+    if (_voice) u.voice = _voice;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   } catch (e) {}
 }
