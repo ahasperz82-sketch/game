@@ -496,7 +496,11 @@ function pickVoice(){
   try{
     if(!('speechSynthesis' in window)) return;
     var vs=window.speechSynthesis.getVoices()||[];
-    for(var i=0;i<vs.length;i++){ if(/^ko/i.test(vs[i].lang||'')){ koVoice=vs[i]; return; } }
+    var ko=[]; for(var i=0;i<vs.length;i++){ if(/^ko/i.test((vs[i].lang||'').replace('_','-'))){ ko.push(vs[i]); } }
+    if(!ko.length) return;
+    var pref=["Google \ud55c\uad6d\uc5b4","Google","SunHi","\uc120\ud788","Yuna","\uc720\ub098","InJoon","\uc778\uc900","Heami","\ud574\ubbf8"];
+    for(var p=0;p<pref.length;p++){ for(var j=0;j<ko.length;j++){ if((ko[j].name||'').indexOf(pref[p])>=0){ koVoice=ko[j]; return; } } }
+    koVoice=ko[0];
   }catch(e){}
 }
 try{ if('speechSynthesis' in window){ pickVoice(); window.speechSynthesis.onvoiceschanged=pickVoice; } }catch(e){}
@@ -506,7 +510,7 @@ function speak(text){
     window.speechSynthesis.cancel();
     var u=new SpeechSynthesisUtterance(text);
     u.lang='ko-KR'; if(koVoice) u.voice=koVoice;
-    u.rate=0.95; u.pitch=1.25; u.volume=1;
+    u.rate=1.0; u.pitch=1.05; u.volume=1;
     window.speechSynthesis.speak(u);
   }catch(e){}
 }
