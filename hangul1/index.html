@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>한글 낚시터</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  background:linear-gradient(#d9f4ff,#fff8e8);display:flex;justify-content:center;
+  -webkit-user-select:none;user-select:none;overflow-x:hidden}
+#app{width:100%;max-width:480px;min-width:320px;display:flex;flex-direction:column;min-height:100vh}
+header{display:flex;align-items:center;gap:8px;padding:10px 12px}
+#walletBox{background:#fff;border-radius:999px;padding:8px 16px;font-size:20px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.hspace{flex:1}
+.hbtn{border:none;background:#fff;border-radius:14px;padding:10px 14px;font-size:17px;
+  font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12);cursor:pointer;font-family:inherit}
+#btnGear{font-size:15px;padding:8px 10px;opacity:.75}
+main{flex:1;display:flex;flex-direction:column}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+.big{min-height:64px;font-size:24px;font-weight:800;border:none;border-radius:18px;
+  color:#fff;background:linear-gradient(135deg,#57c3ff,#2a7fd4);
+  box-shadow:0 4px 0 #1c5b9c;width:100%;margin-top:14px}
+.big.alt{background:linear-gradient(135deg,#ffb15c,#f28b1f);box-shadow:0 4px 0 #b5650f;
+  font-size:19px;min-height:64px}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+/* 시작 화면 */
+#scrStart{padding:20px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrStart h1{font-size:30px;color:#155d94;margin-bottom:6px}
+#scrStart .sub{font-size:16px;color:#3f7ba8;margin-bottom:10px}
+#startFish{font-size:60px;animation:bob 2s infinite ease-in-out}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+/* 게임 화면 */
+#prob{margin:2px 12px;background:#fff;border:3px solid #ffd166;border-radius:18px;
+  padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:14px}
+#pic{font-size:52px}
+#slots{display:flex;gap:10px}
+.slot{min-width:64px;height:64px;border:3px dashed #3a86ff;border-radius:14px;background:#f5faff;
+  display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#155d94;
+  padding:0 8px}
+.slot.filled{border-style:solid;border-color:#06d6a0;background:#eafff5}
+.slot.guide{animation:blink .5s infinite;border-color:#f2547d}
+#goalBar{text-align:center;font-size:14px;color:#3f7ba8;padding:4px}
+#banner{margin:2px 12px;text-align:center;font-size:18px;font-weight:700;color:#155d94;min-height:26px}
+#seaWrap{flex:1;display:flex;flex-direction:column;margin:4px 12px 12px}
+#rod{font-size:34px;padding-left:16px;height:40px}
+#sea{position:relative;flex:1;min-height:280px;overflow:hidden;border-radius:20px;
+  background:linear-gradient(#9fd9ff 0%,#5db4ec 40%,#2f80c3 100%);touch-action:none;
+  box-shadow:inset 0 6px 12px rgba(255,255,255,.4)}
+#sea .wave{position:absolute;top:-4px;left:0;right:0;text-align:center;color:#e8f7ff;
+  font-size:18px;letter-spacing:6px;opacity:.8;pointer-events:none}
+.fish{position:absolute;left:0;top:0;display:flex;align-items:center;gap:2px;
+  cursor:grab;touch-action:none;will-change:transform;z-index:5}
+.fish .fbody{font-size:36px;display:inline-block}
+.fish .fch{background:#fff;border-radius:16px;min-width:44px;height:44px;padding:0 8px;
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;
+  color:#155d94;box-shadow:0 2px 5px rgba(0,0,0,.25)}
+.fish.dragging{z-index:30}
+.fish.blink .fch,.fish.guide .fch{animation:blink .5s infinite;background:#fff3b8}
+.fish.giggle{animation:giggle .6s}
+@keyframes blink{0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,.9)}50%{box-shadow:0 0 0 10px rgba(255,209,102,0)}}
+@keyframes giggle{0%,100%{filter:none}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+/* 낱말 완성 시트 */
+#clearBox{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;z-index:40}
+#clearInner{background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.2);
+  padding:20px;width:100%;max-width:480px;text-align:center}
+#clearStars{font-size:44px}
+#clearMsg{font-size:22px;font-weight:800;color:#155d94;margin:6px 0}
+/* 도감 */
+#scrDex{padding:12px}
+#scrDex h2{text-align:center;color:#155d94;font-size:24px;margin:8px 0}
+#dexGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dexCell{background:#fff;border-radius:14px;padding:10px 4px;text-align:center;
+  border:3px solid #cfe6f5;min-height:96px}
+.dexCell .de{font-size:32px}
+.dexCell .dn{font-size:14px;font-weight:700;color:#333}
+.dexCell.miss{background:#eef3f7;color:#93a9b8}
+.dexCell.miss .de{filter:grayscale(1);opacity:.5}
+.dexCell .no{font-size:11px;color:#8aa4b5}
+/* 끝 화면 */
+#scrEnd{padding:30px 24px;text-align:center;display:flex;flex-direction:column;justify-content:center;flex:1}
+#scrEnd h2{font-size:28px;color:#155d94;margin:10px 0}
+#endStats{font-size:19px;color:#3f7ba8;margin:8px 0;line-height:1.7}
+/* 모달 */
+#ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;
+  justify-content:center;z-index:50;padding:16px}
+.mbox{background:#fff;border-radius:20px;padding:22px;width:100%;max-width:400px;
+  max-height:85vh;overflow:auto}
+.mbox h3{font-size:20px;margin-bottom:12px;color:#155d94}
+.mbox label{display:block;font-size:15px;font-weight:700;margin:12px 0 4px;color:#444}
+.mbox input,.mbox select,.mbox textarea{width:100%;font-size:18px;padding:12px;border:2px solid #bbb;
+  border-radius:12px;font-family:inherit}
+.mbox textarea{height:140px;font-size:16px}
+.codeShow{font-size:26px;font-weight:800;letter-spacing:2px;text-align:center;
+  background:#f0f7ff;border:2px dashed #3a86ff;border-radius:12px;padding:16px 6px;margin:8px 0;
+  -webkit-user-select:text;user-select:text}
+.mrow{display:flex;gap:10px;margin-top:16px}
+.mrow button{flex:1;min-height:56px;font-size:18px;font-weight:700;border:none;border-radius:14px}
+.mok{background:#2a7fd4;color:#fff}
+.mcancel{background:#e5e5e5;color:#333}
+.gateMsg{color:#d33;font-size:14px;min-height:20px;margin-top:6px}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.flystar{position:fixed;font-size:30px;z-index:99;transition:transform .8s ease-in,opacity .8s;
+  pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div id="walletBox">⭐ <span id="walletStars">0</span></div>
+  <div class="hspace"></div>
+  <button id="btnDex" class="hbtn">📖 도감</button>
+  <button id="btnGear" class="hbtn">⚙️</button>
+</header>
+<main>
+  <section id="scrStart">
+    <div id="startFish">🎣🐟</div>
+    <h1>한글 낚시터</h1>
+    <div class="sub">글자 물고기를 낚아 낱말을 만들어요!</div>
+    <button id="btnStart" class="big">▶ 시작</button>
+    <button id="btnShowCode" class="big alt">🔑 이어하기 코드 보기</button>
+    <button id="btnEnterCode" class="big alt">⌨️ 코드 입력</button>
+  </section>
+
+  <section id="scrGame" class="hidden">
+    <div id="prob">
+      <div id="pic">👜</div>
+      <div id="slots"></div>
+    </div>
+    <div id="goalBar"></div>
+    <div id="banner">물고기를 끌어서 빈칸에 놓아요!</div>
+    <div id="seaWrap">
+      <div id="rod">🎣</div>
+      <div id="sea"><div class="wave">～～～～～～～～～～</div></div>
+    </div>
+  </section>
+
+  <section id="scrDex" class="hidden">
+    <h2>📖 물고기 도감</h2>
+    <div id="dexGrid"></div>
+    <button id="btnDexBack" class="big alt">돌아가기</button>
+  </section>
+
+  <section id="scrEnd" class="hidden">
+    <div style="font-size:60px">🌙</div>
+    <h2>오늘은 여기까지!<br>내일 또 만나!</h2>
+    <div id="endStats"></div>
+    <button id="btnEndDex" class="big alt">📖 도감 구경하기</button>
+    <button id="btnEndCode" class="big alt">🔑 이어하기 코드 보기</button>
+  </section>
+</main>
+</div>
+
+<div id="clearBox" class="hidden">
+  <div id="clearInner">
+    <div id="clearStars">⭐⭐</div>
+    <div id="clearMsg">낱말 완성!</div>
+    <button id="btnNext" class="big">다음 낱말 낚으러 가기</button>
+  </div>
+</div>
+
+<div id="ovl" class="hidden">
+  <div class="mbox hidden" id="mCode">
+    <h3>🔑 이어하기 코드</h3>
+    <div>다른 기기에서 이 코드를 입력하면<br>별과 도감을 옮길 수 있어요.</div>
+    <div class="codeShow" id="codeText"></div>
+    <div class="mrow"><button class="mcancel" id="btnCodeClose">닫기</button></div>
+  </div>
+  <div class="mbox hidden" id="mInput">
+    <h3>⌨️ 코드 입력</h3>
+    <label for="codeIn">이어하기 코드를 넣어 주세요</label>
+    <input id="codeIn" placeholder="예: AB2C-DE3F-GH4J-KL5" autocomplete="off">
+    <div class="gateMsg" id="codeMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnCodeCancel">취소</button>
+      <button class="mok" id="btnCodeOk">복원하기</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mGate">
+    <h3>👨‍👩‍👧 부모님 확인</h3>
+    <label for="gateIn">7 + 8 = ?</label>
+    <input id="gateIn" type="number" inputmode="numeric" autocomplete="off">
+    <div class="gateMsg" id="gateMsg"></div>
+    <div class="mrow">
+      <button class="mcancel" id="btnGateCancel">취소</button>
+      <button class="mok" id="btnGateOk">확인</button>
+    </div>
+  </div>
+  <div class="mbox hidden" id="mSet">
+    <h3>⚙️ 부모 설정</h3>
+    <label for="setWords">낱말 목록 (한 줄에 하나, "낱말 이모지" 순서)</label>
+    <textarea id="setWords"></textarea>
+    <label for="setMode">빈칸 방식</label>
+    <select id="setMode">
+      <option value="letters">글자 낚시 (글자 수만큼 빈칸)</option>
+      <option value="whole">통글자 낚시 (빈칸 1개)</option>
+    </select>
+    <label for="setSpeed">물고기 속도</label>
+    <select id="setSpeed">
+      <option value="1">느리게</option>
+      <option value="2">보통</option>
+      <option value="3">빠르게</option>
+    </select>
+    <label for="setGoal">오늘 목표 (별 개수)</label>
+    <input id="setGoal" type="number" inputmode="numeric" min="1" max="31">
+    <div class="mrow">
+      <button class="mcancel" id="btnSetCancel">취소</button>
+      <button class="mok" id="btnSetOk">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   공통 저장 라이브러리 v1 — 부록 A 공통 저장 규격 v2 구현
+   모든 게임에 이 블록을 그대로 script 태그 안에 붙여 넣는다.
+   게임별로 바꾸는 것은 GAME_ID 한 줄뿐이다.
+   ============================================================ */
+var GAME_ID = "hangul1"; // 게임마다 이 줄만 변경
+
+/* 세이브 코드 문자셋: 영문 대문자+숫자 32자, O·0·I·1 제외 */
+var CS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/* ---------- localStorage 안전 입출력 ---------- */
+function lsGet(k, def) {
+  try {
+    var v = JSON.parse(localStorage.getItem(k));
+    return (v && typeof v === "object") ? v : JSON.parse(JSON.stringify(def));
+  } catch (e) { return JSON.parse(JSON.stringify(def)); }
+}
+function lsSet(k, obj) {
+  try { localStorage.setItem(k, JSON.stringify(obj)); } catch (e) { /* 저장 실패해도 게임은 계속 */ }
+}
+
+/* ---------- 공용 4키 (있는 키는 절대 지우지 않고 읽어서 이어 씀) ---------- */
+function getWallet()  { return lsGet("game_wallet",     {v:1, stars:0, total:0}); }
+function getCloset()  { return lsGet("game_closet",     {v:1, owned:[], wearing:{}}); }
+function getColl()    { return lsGet("game_collection", {v:1, badges:[], cards:[]}); }
+function getSave(def) { return lsGet("game_save_" + GAME_ID, def || {}); }
+function putWallet(w) { lsSet("game_wallet", w); }
+function putCloset(c) { lsSet("game_closet", c); }
+function putColl(c)   { lsSet("game_collection", c); }
+function putSave(s)   { lsSet("game_save_" + GAME_ID, s); }
+
+/* 별 획득: stars와 total을 함께 올린다. total은 절대 줄지 않는다 */
+function addStars(n) {
+  var w = getWallet(); w.stars += n; w.total += n; putWallet(w);
+}
+/* 별 사용(상점): stars만 줄인다. 부족하면 false */
+function spendStars(n) {
+  var w = getWallet(); if (w.stars < n) return false;
+  w.stars -= n; putWallet(w); return true;
+}
+/* 뱃지·카드 획득(중복 방지) */
+function addBadge(n) { var c = getColl(); if (c.badges.indexOf(n) < 0) { c.badges.push(n); putColl(c); } }
+function addCard(n)  { var c = getColl(); if (c.cards.indexOf(n)  < 0) { c.cards.push(n);  putColl(c); } }
+
+/* ---------- 세이브 코드 (15자: 데이터 14 + 검사 1, 4자마다 하이픈) ----------
+   구성: stars(2) total(2) closet소유비트(3) badges비트(3) cards비트(2) 진행p1(1) 진행p2(1)
+   숫자 2자 = 0~1023, 비트 3자 = 항목 1~15번, 비트 2자 = 항목 1~10번, 1자 = 0~31 */
+function enc2(n) { n = Math.max(0, Math.min(1023, Math.round(n||0))); return CS[Math.floor(n/32)] + CS[n%32]; }
+function dec2(s) { return CS.indexOf(s[0])*32 + CS.indexOf(s[1]); }
+function encBits(arr, chars) { /* 번호 배열 -> chars글자 비트마스크 */
+  var bits = 0;
+  (arr||[]).forEach(function(x){ x = parseInt(x,10); if (x >= 1 && x <= chars*5) bits |= (1 << (x-1)); });
+  var out = "";
+  for (var i = chars-1; i >= 0; i--) out += CS[(bits >> (i*5)) & 31];
+  return out;
+}
+function decBits(s) { /* 글자들 -> 번호 배열 */
+  var bits = 0, i;
+  for (i = 0; i < s.length; i++) bits = (bits << 5) | CS.indexOf(s[i]);
+  var arr = [];
+  for (i = 1; i <= s.length*5; i++) if (bits & (1 << (i-1))) arr.push(i);
+  return arr;
+}
+function makeCode(p1, p2) {
+  var w = getWallet(), c = getCloset(), k = getColl();
+  var raw = enc2(w.stars) + enc2(w.total) + encBits(c.owned,3) + encBits(k.badges,3) + encBits(k.cards,2) + CS[Math.max(0,Math.min(31,p1||0))] + CS[Math.max(0,Math.min(31,p2||0))];
+  var sum = 0; for (var i = 0; i < raw.length; i++) sum += CS.indexOf(raw[i]);
+  raw += CS[sum % 32];
+  return raw.replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+function parseCode(str) {
+  var raw = (str||"").toUpperCase().replace(/[^A-Z2-9]/g, "");
+  if (raw.length !== 15) return null;
+  var sum = 0, i, x;
+  for (i = 0; i < 14; i++) { x = CS.indexOf(raw[i]); if (x < 0) return null; sum += x; }
+  if (CS[sum % 32] !== raw[14]) return null; /* 검사 글자 불일치 = 오타 */
+  return {
+    stars:  dec2(raw.slice(0,2)),
+    total:  dec2(raw.slice(2,4)),
+    owned:  decBits(raw.slice(4,7)),
+    badges: decBits(raw.slice(7,10)),
+    cards:  decBits(raw.slice(10,12)),
+    p1: CS.indexOf(raw[12]),
+    p2: CS.indexOf(raw[13])
+  };
+}
+/* 복원 적용: 재산이 지금보다 적으면 confirmFn(안내문)이 true일 때만 덮어씀.
+   total은 어떤 경우에도 큰 값을 유지한다. 반환: "ok" | "cancel" | "bad" */
+function applyCode(str, confirmFn) {
+  var d = parseCode(str);
+  if (!d) return "bad";
+  var w = getWallet();
+  if (d.total < w.total || d.stars < w.stars) {
+    var msg = "입력한 코드의 재산(별 " + d.stars + "개)이 지금 기기(별 " + w.stars + "개)보다 적어요. 그래도 코드 쪽으로 되돌릴까요?";
+    if (!confirmFn(msg)) return "cancel";
+  }
+  putWallet({v:1, stars:d.stars, total:Math.max(d.total, w.total)});
+  var c = getCloset(); c.owned = d.owned; putCloset(c);
+  putColl({v:1, badges:d.badges, cards:d.cards});
+  return "ok";
+}
+
+/* ---------- 한국어 음성(TTS): 화면 첫 터치 후부터 동작 ---------- */
+function speak(txt) {
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(txt);
+    u.lang = "ko-KR"; u.rate = 0.9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) {}
+}
+/* ---------- 효과음(WebAudio, 외부 파일 없음) ---------- */
+var _ac = null;
+function _ctx() { if (!_ac) { try { _ac = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return _ac; }
+function beep(freq, dur, type) {
+  var ac = _ctx(); if (!ac) return;
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + (dur||0.15));
+  o.connect(g); g.connect(ac.destination);
+  o.start(); o.stop(ac.currentTime + (dur||0.15));
+}
+function sfxGood()  { beep(660,0.12); setTimeout(function(){beep(880,0.12);},110); setTimeout(function(){beep(1320,0.2);},220); }
+function sfxHint()  { beep(440,0.15,"triangle"); }
+function sfxDone()  { [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){beep(f,0.18);}, i*140); }); }
+/* ============================================================ */
+
+/* ==================== 게임 본체: 한글 낚시터 ====================
+   저장 키: game_wallet · game_closet · game_collection · game_save_hangul1 */
+var DEFAULT_WORDS = "가방 👜\n나무 🌳\n바다 🌊\n사자 🦁\n오리 🦆\n포도 🍇\n하마 🦛\n구두 👞\n모자 🧢\n우유 🥛";
+var FISH_CARD_BASE = 12; /* 공룡 도감 1~12번 다음 칸부터 물고기 */
+
+var SV = getSave({v:1, day:"", todayStars:0, wordsDone:0,
+  cfg:{mode:"letters", speed:2, goal:5, words:DEFAULT_WORDS}});
+if (!SV.cfg) SV.cfg = {mode:"letters", speed:2, goal:5, words:DEFAULT_WORDS};
+if (!SV.cfg.words) SV.cfg.words = DEFAULT_WORDS;
+if (!SV.cfg.mode) SV.cfg.mode = "letters";
+if (!SV.cfg.speed) SV.cfg.speed = 2;
+if (!SV.cfg.goal) SV.cfg.goal = 5;
+
+function $(id){ return document.getElementById(id); }
+function show(el){ el.classList.remove("hidden"); }
+function hide(el){ el.classList.add("hidden"); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function todayStr(){ var d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function ensureDay(){ if (SV.day !== todayStr()) { SV.day = todayStr(); SV.todayStars = 0; putSave(SV); } }
+
+var SCREENS = ["scrStart","scrGame","scrDex","scrEnd"];
+function showScreen(id){ SCREENS.forEach(function(s){ if(s===id) show($(s)); else hide($(s)); }); }
+var MODALS = ["mCode","mInput","mGate","mSet"];
+function openModal(id){ show($("ovl")); MODALS.forEach(function(m){ if(m===id) show($(m)); else hide($(m)); }); }
+function closeModal(){ hide($("ovl")); }
+
+function refreshWallet(){ $("walletStars").textContent = getWallet().stars; }
+function flyStar(fromEl, delay){
+  var src = fromEl || $("slots");
+  var r1 = src.getBoundingClientRect(), r2 = $("walletBox").getBoundingClientRect();
+  var s = document.createElement("div");
+  s.className = "flystar"; s.textContent = "⭐";
+  var x0 = r1.left + r1.width/2 - 15, y0 = r1.top + r1.height/2 - 15;
+  s.style.left = x0 + "px"; s.style.top = y0 + "px";
+  document.body.appendChild(s);
+  setTimeout(function(){
+    s.style.transform = "translate(" + (r2.left + r2.width/2 - 15 - x0) + "px," +
+      (r2.top + r2.height/2 - 15 - y0) + "px) scale(.4)";
+    s.style.opacity = "0.3";
+  }, 40 + (delay||0));
+  setTimeout(function(){ if (s.parentNode) s.parentNode.removeChild(s); refreshWallet(); }, 900 + (delay||0));
+}
+function awardStars(n, el){
+  if (n <= 0) return;
+  addStars(n);
+  for (var i=0;i<n;i++) flyStar(el, i*220);
+}
+
+/* ---------- 낱말 목록 ---------- */
+function getWords(){
+  var out = [];
+  String(SV.cfg.words || DEFAULT_WORDS).split(/[\n,]/).forEach(function(line){
+    line = line.trim(); if (!line) return;
+    var parts = line.split(/\s+/);
+    if (parts[0]) out.push({w:parts[0], e:parts[1] || "🐠"});
+  });
+  if (!out.length) out = [{w:"가방", e:"👜"}];
+  return out.slice(0, 15);
+}
+
+/* ---------- 물고기·낱말 판 ---------- */
+var fishes = [], slots = [], curWord = null, curIdx = 0;
+var wrongs = 0, guided = false, guideFish = null, roundOver = true;
+var FISH_EMO = ["🐟","🐠","🐡","🦈","🐳"];
+
+function seaW(){ return $("sea").clientWidth; }
+function seaH(){ return $("sea").clientHeight; }
+function speedVal(){ return [0, 0.35, 0.7, 1.25][SV.cfg.speed] || 0.7; }
+function goalText(){ return "오늘 별 " + SV.todayStars + " / 목표 " + SV.cfg.goal + "개"; }
+
+function pickWord(){
+  var ws = getWords(), coll = getColl().cards;
+  var fresh = [], older = [];
+  ws.forEach(function(x, i){
+    if (coll.indexOf(FISH_CARD_BASE + i + 1) < 0) fresh.push({x:x, i:i});
+    else older.push({x:x, i:i});
+  });
+  var pool = fresh.length ? fresh : older;
+  var p = pool[Math.floor(Math.random() * pool.length)];
+  curWord = p.x; curIdx = p.i;
+}
+
+function clearSea(){
+  fishes.forEach(function(f){ if (f.el.parentNode) f.el.parentNode.removeChild(f.el); });
+  fishes = [];
+}
+
+function startWord(){
+  ensureDay();
+  showScreen("scrGame");
+  clearSea();
+  pickWord();
+  wrongs = 0; guided = false; guideFish = null; roundOver = false;
+  $("pic").textContent = curWord.e;
+  $("goalBar").textContent = goalText();
+  $("banner").textContent = "물고기를 끌어서 빈칸에 놓아요!";
+  /* 빈칸 만들기 */
+  var parts = (SV.cfg.mode === "whole") ? [curWord.w] : curWord.w.split("");
+  var sBox = $("slots"); sBox.innerHTML = ""; slots = [];
+  parts.forEach(function(ch){
+    var el = document.createElement("div");
+    el.className = "slot";
+    sBox.appendChild(el);
+    slots.push({el:el, ch:ch, filled:false});
+  });
+  /* 물고기 만들기: 필요한 글자 + 미끼 글자 */
+  var need = parts.slice(0);
+  var decoys = [], pool = [];
+  getWords().forEach(function(x){
+    if (x.w === curWord.w) return;
+    if (SV.cfg.mode === "whole") pool.push(x.w);
+    else x.w.split("").forEach(function(c){ pool.push(c); });
+  });
+  shuffle(pool);
+  var total = (SV.cfg.mode === "whole") ? 4 : Math.min(7, need.length + 4);
+  pool.forEach(function(c){
+    if (decoys.length >= total - need.length) return;
+    if (need.indexOf(c) >= 0 || decoys.indexOf(c) >= 0) return;
+    decoys.push(c);
+  });
+  shuffle(need.concat(decoys)).forEach(function(ch){ addFish(ch); });
+  speak(curWord.w + "! 맞는 글자 물고기를 낚아 보세요");
+}
+
+function addFish(ch){
+  var el = document.createElement("div");
+  el.className = "fish";
+  el.innerHTML = '<span class="fch">' + ch + '</span><span class="fbody">' +
+    FISH_EMO[Math.floor(Math.random()*FISH_EMO.length)] + '</span>';
+  $("sea").appendChild(el);
+  var f = {
+    el: el, ch: ch, dead: false, drag: false, pause: false,
+    x: Math.random() * Math.max(40, seaW() - 110),
+    y: 30 + Math.random() * Math.max(40, seaH() - 110),
+    vx: (Math.random() < 0.5 ? -1 : 1) * speedVal() * (0.8 + Math.random()*0.5)
+  };
+  f.el.style.transform = "translate(" + f.x + "px," + f.y + "px)";
+  attachDrag(f);
+  fishes.push(f);
+}
+
+function loop(){
+  fishes.forEach(function(f){
+    if (f.dead || f.drag || f.pause) return;
+    f.x += f.vx;
+    var max = Math.max(20, seaW() - 100);
+    if (f.x < 4)   { f.x = 4;   f.vx = Math.abs(f.vx); }
+    if (f.x > max) { f.x = max; f.vx = -Math.abs(f.vx); }
+    f.el.style.transform = "translate(" + f.x + "px," + f.y + "px)";
+    f.el.querySelector(".fbody").style.transform = (f.vx < 0) ? "scaleX(1)" : "scaleX(-1)";
+  });
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function attachDrag(f){
+  f.el.addEventListener("pointerdown", function(e){
+    if (f.dead || roundOver) return;
+    e.preventDefault();
+    f.drag = true; f.pause = false;
+    f.el.classList.add("dragging");
+    try { f.el.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  f.el.addEventListener("pointermove", function(e){
+    if (!f.drag) return;
+    var sr = $("sea").getBoundingClientRect();
+    f.x = e.clientX - sr.left - 45;
+    f.y = e.clientY - sr.top - 25;
+    f.el.style.transform = "translate(" + f.x + "px," + f.y + "px)";
+  });
+  f.el.addEventListener("pointerup", function(e){
+    if (!f.drag) return;
+    dropFish(f, e);
+  });
+  f.el.addEventListener("pointercancel", function(){
+    if (f.drag) returnFish(f);
+  });
+}
+
+function firstEmpty(){
+  for (var i = 0; i < slots.length; i++) if (!slots[i].filled) return slots[i];
+  return null;
+}
+function findFish(ch){
+  for (var i = 0; i < fishes.length; i++) {
+    if (!fishes[i].dead && fishes[i].ch === ch) return fishes[i];
+  }
+  return null;
+}
+
+function dropFish(f, e){
+  f.drag = false;
+  f.el.classList.remove("dragging");
+  var best = null, bd = 1e9;
+  slots.forEach(function(s){
+    if (s.filled) return;
+    var r = s.el.getBoundingClientRect();
+    var d = Math.hypot(e.clientX - (r.left + r.width/2), e.clientY - (r.top + r.height/2));
+    if (d < bd) { bd = d; best = s; }
+  });
+  if (best && bd < 95) { /* 너그러운 판정: 빈칸 근처면 들어간 것으로 */
+    if (guided && guideFish && f !== guideFish) {
+      $("banner").textContent = "반짝이는 물고기를 잡아 보세요!";
+      speak("반짝이는 물고기를 잡아 보세요");
+      returnFish(f);
+      return;
+    }
+    if (f.ch === best.ch) fillSlot(best, f);
+    else wrongDrop(f);
+  } else {
+    returnFish(f);
+  }
+}
+
+function returnFish(f){
+  f.drag = false;
+  f.el.classList.remove("dragging");
+  f.pause = true;
+  f.x = Math.max(4, Math.min(seaW() - 100, f.x));
+  f.y = 30 + Math.random() * Math.max(40, seaH() - 110);
+  f.el.style.transition = "transform .5s";
+  f.el.style.transform = "translate(" + f.x + "px," + f.y + "px)";
+  setTimeout(function(){ f.el.style.transition = ""; f.pause = false; }, 520);
+}
+
+function wrongDrop(f){
+  wrongs++;
+  sfxHint(); /* 부드러운 소리, 잃는 것 없음 */
+  f.el.classList.add("giggle");
+  setTimeout(function(){ f.el.classList.remove("giggle"); }, 600);
+  returnFish(f);
+  if (wrongs === 2) {
+    var s = firstEmpty();
+    var hf = s ? findFish(s.ch) : null;
+    if (hf) hf.el.classList.add("blink");
+    $("banner").textContent = "반짝이는 물고기를 잘 봐요!";
+    speak("괜찮아요! 반짝이는 물고기를 잘 봐요");
+  } else if (wrongs >= 3) {
+    startGuide();
+  } else {
+    $("banner").textContent = "괜찮아요! 다시 한번!";
+    speak("괜찮아요, 다시 해 봐요");
+  }
+}
+
+function startGuide(){
+  guided = true;
+  var s = firstEmpty(); if (!s) return;
+  s.el.classList.add("guide");
+  guideFish = findFish(s.ch);
+  if (guideFish) guideFish.el.classList.add("guide");
+  $("banner").textContent = "정답은 [" + s.ch + "]! 따라 놓아 보세요!";
+  speak("정답은 " + s.ch + "! 반짝이는 물고기를 빈칸에 끌어다 놓아 보세요");
+}
+
+function fillSlot(s, f){
+  s.filled = true;
+  s.el.textContent = f.ch;
+  s.el.classList.add("filled");
+  s.el.classList.remove("guide");
+  f.dead = true;
+  if (f.el.parentNode) f.el.parentNode.removeChild(f.el);
+  fishes.forEach(function(x){ x.el.classList.remove("blink"); x.el.classList.remove("guide"); });
+  guided = false; guideFish = null;
+  sfxGood();
+  if (firstEmpty()) speak(f.ch + "! 잘했어요!");
+  else setTimeout(wordComplete, 250);
+}
+
+function wordComplete(){
+  roundOver = true;
+  var stars = (wrongs === 0) ? 2 : 1; /* 한 번에 완성 2개, 힌트 후 1개 */
+  addCard(FISH_CARD_BASE + curIdx + 1); /* 물고기 도감 등록 */
+  awardStars(stars, $("slots"));
+  SV.todayStars += stars;
+  SV.wordsDone = (SV.wordsDone||0) + 1;
+  putSave(SV); /* 판이 끝날 때마다 자동 저장 */
+  clearSea();
+  $("banner").textContent = "완성! " + curWord.e + " " + curWord.w;
+  $("clearStars").textContent = (stars === 2) ? "⭐⭐" : "⭐";
+  $("clearMsg").textContent = curWord.e + " " + curWord.w + " 완성! 도감에 등록!";
+  $("btnNext").textContent = (SV.todayStars >= SV.cfg.goal) ? "🌙 오늘 목표 달성!" : "다음 낱말 낚으러 가기";
+  show($("clearBox"));
+  sfxGood();
+  speak(curWord.w + "! " + curWord.w + "! 참 잘했어요!");
+}
+
+$("btnNext").addEventListener("click", function(){
+  hide($("clearBox"));
+  if (SV.todayStars >= SV.cfg.goal) showEnd(); else startWord();
+});
+
+function showEnd(){
+  clearSea();
+  showScreen("scrEnd");
+  var ws = getWords(), coll = getColl().cards, got = 0;
+  ws.forEach(function(x, i){ if (coll.indexOf(FISH_CARD_BASE + i + 1) >= 0) got++; });
+  $("endStats").innerHTML = "오늘 모은 별: ⭐ " + SV.todayStars + "개<br>지갑의 별: ⭐ " +
+    getWallet().stars + "개<br>물고기 도감: " + got + " / " + ws.length + " 마리";
+  sfxDone();
+  speak("오늘은 여기까지! 내일 또 만나!");
+}
+
+/* ---------- 도감 ---------- */
+var dexFrom = "scrStart";
+function renderDex(){
+  var coll = getColl().cards;
+  var g = $("dexGrid"); g.innerHTML = "";
+  getWords().forEach(function(x, i){
+    var has = coll.indexOf(FISH_CARD_BASE + i + 1) >= 0;
+    var c = document.createElement("div");
+    c.className = "dexCell" + (has ? "" : " miss");
+    c.innerHTML = '<div class="no">No.' + (i+1) + '</div><div class="de">' + (has ? "🐟" : "❓") +
+      '</div><div class="dn">' + (has ? (x.e + " " + x.w) : "무슨 낱말일까?") + '</div>';
+    g.appendChild(c);
+  });
+}
+$("btnDex").addEventListener("click", function(){
+  var cur = SCREENS.filter(function(s){ return !$(s).classList.contains("hidden"); })[0];
+  if (cur !== "scrDex") dexFrom = cur || "scrStart";
+  renderDex(); showScreen("scrDex");
+});
+$("btnDexBack").addEventListener("click", function(){
+  if (dexFrom === "scrGame" && roundOver === false) showScreen("scrGame");
+  else showScreen(dexFrom);
+});
+$("btnEndDex").addEventListener("click", function(){ dexFrom = "scrEnd"; renderDex(); showScreen("scrDex"); });
+
+/* ---------- 시작·코드 ---------- */
+$("btnStart").addEventListener("click", function(){
+  var ac = _ctx(); if (ac && ac.state === "suspended") { try { ac.resume(); } catch(e){} }
+  ensureDay();
+  if (SV.todayStars >= SV.cfg.goal) { showEnd(); return; }
+  startWord();
+});
+function showCodeModal(){
+  $("codeText").textContent = makeCode(Math.min(31, SV.wordsDone||0), Math.min(31, SV.todayStars));
+  openModal("mCode");
+}
+$("btnShowCode").addEventListener("click", showCodeModal);
+$("btnEndCode").addEventListener("click", showCodeModal);
+$("btnCodeClose").addEventListener("click", closeModal);
+$("btnEnterCode").addEventListener("click", function(){
+  $("codeIn").value = ""; $("codeMsg").textContent = "";
+  openModal("mInput");
+});
+$("btnCodeCancel").addEventListener("click", closeModal);
+$("btnCodeOk").addEventListener("click", function(){
+  var r = applyCode($("codeIn").value, function(m){ return window.confirm(m); });
+  if (r === "ok") {
+    refreshWallet(); closeModal();
+    speak("코드를 복원했어요!");
+    alert("복원 완료! 별과 도감을 불러왔어요.");
+  } else if (r === "cancel") {
+    closeModal();
+  } else {
+    $("codeMsg").textContent = "코드가 맞지 않아요. 다시 확인해 주세요.";
+    $("codeIn").classList.add("shake");
+    setTimeout(function(){ $("codeIn").classList.remove("shake"); }, 500);
+  }
+});
+
+/* ---------- 부모설정 (7+8 잠금) ---------- */
+$("btnGear").addEventListener("click", function(){
+  $("gateIn").value = ""; $("gateMsg").textContent = "";
+  openModal("mGate");
+});
+$("btnGateCancel").addEventListener("click", closeModal);
+$("btnGateOk").addEventListener("click", function(){
+  if (parseInt($("gateIn").value, 10) === 15) {
+    $("setWords").value = SV.cfg.words;
+    $("setMode").value = SV.cfg.mode;
+    $("setSpeed").value = String(SV.cfg.speed);
+    $("setGoal").value = String(SV.cfg.goal);
+    openModal("mSet");
+  } else {
+    $("gateMsg").textContent = "다시 생각해 보세요!";
+    $("gateIn").classList.add("shake");
+    setTimeout(function(){ $("gateIn").classList.remove("shake"); }, 500);
+  }
+});
+$("btnSetCancel").addEventListener("click", closeModal);
+$("btnSetOk").addEventListener("click", function(){
+  var w = $("setWords").value.trim();
+  if (w) SV.cfg.words = w;
+  SV.cfg.mode = $("setMode").value === "whole" ? "whole" : "letters";
+  SV.cfg.speed = parseInt($("setSpeed").value, 10) || 2;
+  var g = parseInt($("setGoal").value, 10);
+  SV.cfg.goal = (g >= 1 && g <= 31) ? g : 5;
+  putSave(SV);
+  closeModal();
+  $("goalBar").textContent = goalText();
+  if (!$("scrEnd").classList.contains("hidden") && SV.todayStars < SV.cfg.goal) showScreen("scrStart");
+});
+
+/* ---------- 초기화 ---------- */
+ensureDay();
+refreshWallet();
+showScreen("scrStart");
+</script>
+</body>
+</html>
